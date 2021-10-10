@@ -33,8 +33,11 @@ def login(clientSocket):
 def logout(clientSocket):
     clientSocket.sendall(' '.join([QUIT, "None"]).encode())
 
-def get_messages(clientSocket):
+def get_messages(clientSocket, name):
     clientSocket.sendall(' '.join([GETM, name]).encode())
+
+def send_message(clientSocket, senderName, recipientName, message):
+    clientSocket.sendall(' '.join([MSSG, senderName, recipientName, message]).encode())
 
 #endregion
 
@@ -77,7 +80,7 @@ def update():
                 print("==== invalid command")
                 continue
         else:
-            get_messages(clientSocket)
+            get_messages(clientSocket, name)
         
         # recieve response
         data = clientSocket.recv(1024)
@@ -87,7 +90,7 @@ def update():
         if response != "None":
             print(response)
 
-        if (status == CONVERSATION_END):
+        if (status == CONNECTION_END):
             break
 
 #end region

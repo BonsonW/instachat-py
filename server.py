@@ -25,11 +25,15 @@ class ClientThread(Thread):
         response = []
         while self.alive:
             data = self.clientSocket.recv(1024)
-            method, params = data.decode().split(' ', 1)
+
+            try:
+                method, params = data.decode().split(' ', 1)
+            except:
+                continue
 
             if method == QUIT:
                 self.alive = False
-                response = [CONVERSATION_END, "ending connection, goodbye"]
+                response = [CONNECTION_END, "ending connection, goodbye"]
             elif method == HELO:
                 response = self.welcome(params)
             elif method == LOGN:
@@ -37,11 +41,12 @@ class ClientThread(Thread):
                 response = self.login(name, pswd)
             elif method == GETM:
                 response = self.get_messages(params)
+            elif method == MSSG:
+                response = self.get_messages(params)
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
             self.clientSocket.send(' '.join(response).encode())
-            if method == QUIT: break
 
 #region request method processes
 
