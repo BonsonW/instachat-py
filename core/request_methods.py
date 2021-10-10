@@ -1,0 +1,7 @@
+HELO = "HELO"
+PSWD = "PSWD"
+MSSG = "MSSG"
+DATA = "DATA"
+QUIT = "QUIT"
+ELSE = "ELSE"
+BLCK = "BLCK"
