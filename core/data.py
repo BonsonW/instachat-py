@@ -15,8 +15,8 @@ def add_user(name):
     users.append(user.User(name))
 
 def user_initialized(name):
-    return False
-    
+    return get_user(name) is not None
+
 #endregion
 
 # add all existing users to database

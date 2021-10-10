@@ -22,6 +22,6 @@ def test_user_list_initialized():
 
 def test_add_user_success(missing_user_cred):
     data.add_user(missing_user_cred[0])
-    assert data.get_user(missing_user_cred[0]) is not None
+    assert data.user_initialized(missing_user_cred[0]) == True
 
 #endregion
