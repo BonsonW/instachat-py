@@ -4,7 +4,7 @@ from threading import Thread
 import sys, select
 
 # internal
-import auth
+from core import auth, data
 from request_methods import *
 from status_codes import *
 
@@ -56,10 +56,11 @@ class ClientThread(Thread):
         # create new acc
         if not auth.user_exists(name):
             auth.add_cred(name, pswd)
+            data.add_user(name)
             self.authorised = True
             return [ACTION_COMPLETE, "welcome", name, "you are logged into your new account"]
 
-        # check password
+        # or check password
         self.authorised = auth.cred_exists(name, pswd)
         if self.authorised:
             return [ACTION_COMPLETE, "welcome", name, "you are successfully logged in"]
