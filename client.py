@@ -66,7 +66,7 @@ commands = []
 
 def update():
     while True:
-        
+        sleep(1)
         if commands:
             command = commands.pop()
             
