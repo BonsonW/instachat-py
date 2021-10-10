@@ -6,7 +6,8 @@ import sys, select
 # internal
 import core.auth as auth
 from core.request_methods import *
-from core.response_codes import *
+from core.status_codes import *
+from core.status_codes import INVALID_PARAMS
 
 #region client thread
 
@@ -63,7 +64,10 @@ class ClientThread(Thread):
 
         if self.credentials["pswd"] is not None:
             self.authorised = (pswd == self.credentials["pswd"])
-            response = ' '.join([ACTION_COMPLETE, "welcome", name, ", you are successfully logged in"])
+            if self.authorised:
+                response = ' '.join([ACTION_COMPLETE, "welcome", name, ", you are successfully logged in"])
+            else:
+                response = ' '.join([INVALID_PARAMS, "welcome", name, ", you are successfully logged in"])
         else:
             auth.add_cred(name, pswd)
             self.authorised = True
