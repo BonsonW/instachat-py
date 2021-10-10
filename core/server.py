@@ -4,10 +4,10 @@ from threading import Thread
 import sys, select
 
 # internal
-import core.auth as auth
-from core.request_methods import *
-from core.status_codes import *
-from core.status_codes import INVALID_PARAMS
+import auth
+from request_methods import *
+from status_codes import *
+from status_codes import INVALID_PARAMS
 
 #region client thread
 
@@ -81,11 +81,11 @@ class ClientThread(Thread):
 #region welcome process
 
 # acquire server host and port from command line parameter
-if len(sys.argv) != 2:
-    print("\n===== Error usage, python3 TCPServer3.py SERVER_PORT ======\n");
-    exit(0);
+# if len(sys.argv) != 2:
+#     print("\n===== Error usage, python3 TCPServer3.py SERVER_PORT ======\n");
+#     exit(0);
 serverHost = "127.0.0.1"
-serverPort = int(sys.argv[1])
+serverPort =  8080 # int(sys.argv[1])
 serverAddress = (serverHost, serverPort)
 
 # define socket for the server side and bind address
