@@ -1,6 +1,6 @@
 # internal
-from core import auth
-from core.user import User
+from . import auth
+from .user import User
 
 users = []
 

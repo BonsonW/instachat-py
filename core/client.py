@@ -1,4 +1,6 @@
 # external
+from threading import Thread
+from time import sleep
 from socket import *
 import sys
 
@@ -6,11 +8,12 @@ import sys
 from request_methods import *
 from status_codes import *
 
+name = input("name: ")
+
 #region client methods
 
 def login(clientSocket):
-    # enter username
-    name = input("name: ")
+    # check username
     clientSocket.sendall(' '.join([HELO, name]).encode())
     data = clientSocket.recv(1024)
     status, response = data.decode().split(' ', 1)
@@ -29,9 +32,9 @@ def login(clientSocket):
 
 def logout(clientSocket):
     clientSocket.sendall(' '.join([QUIT, "None"]).encode())
-    data = clientSocket.recv(1024)
-    status, response = data.decode().split(' ', 1)
-    print(response)
+
+def get_messages(clientSocket):
+    clientSocket.sendall(' '.join([GETM, name]).encode())
 
 #endregion
 
@@ -57,28 +60,45 @@ login(clientSocket)
 #endregion
 
 
-#region client loop
+#region update loop
 
-while True:
-    # send method
-    message = input("===== please type any message you want to send to server:\n")
-    
-    if message == "logout":
-        logout(clientSocket)
-    # recieve response
-    data = clientSocket.recv(1024)
-    status, response = data.decode().split(' ', 1)
+commands = []
 
-    # print response given by server
-    print(response)
+def update():
+    while True:
         
-    ans = input('\nDo you want to continue(y/n) :')
-    if ans == 'y':
-        continue
-    else:
-        break
+        if commands:
+            command = commands.pop()
+            
+            # execute methods
+            if command == "logout":
+                logout(clientSocket)
+            else:
+                print("==== invalid command")
+                continue
+        else:
+            get_messages(clientSocket)
+        
+        # recieve response
+        data = clientSocket.recv(1024)
+        status, response = data.decode().split(' ', 1)
+
+        # print response given by server
+        print(response)
+
+        if (status == CONVERSATION_END):
+            break
 
 #end region
+
+t = Thread(target=update)
+t.start()
+
+while True:
+    command = input()
+    commands.append(command)
+    if command == "logout":
+        break
 
 # close the socket
 clientSocket.close()

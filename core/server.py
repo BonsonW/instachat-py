@@ -4,7 +4,7 @@ from threading import Thread
 import sys, select
 
 # internal
-from core import auth, data
+from . import auth, data, message
 from request_methods import *
 from status_codes import *
 
@@ -35,6 +35,8 @@ class ClientThread(Thread):
             elif method == LOGN:
                 name, pswd = params.split(' ', 1)
                 response = self.login(name, pswd)
+            elif method == GETM:
+                response = self.login(name, pswd)
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
@@ -45,7 +47,7 @@ class ClientThread(Thread):
 
     def welcome(self, name):
         if not auth.user_exists(name):
-            return [REQUIRE_NEW_ACC, "hello", name, "please enter a password for your new account"]
+            return [RESOURCE_NOT_FOUND, "hello", name, "please enter a password for your new account"]
         return [ACTION_COMPLETE, "welcome", name, "please enter your password"]
         
         
@@ -66,7 +68,13 @@ class ClientThread(Thread):
             return [ACTION_COMPLETE, "welcome", name, "you are successfully logged in"]
         else:
             return [INVALID_PARAMS, "incorrect password provided for", name]
-        
+    
+    def get_messages(name):
+        messages = message.get_messages(name)
+        if messages:
+            return [RESOURCE_NOT_FOUND, "None"]
+        else:
+            return [RESOURCE_NOT_FOUND, "None"]
 
 
 #endregion
