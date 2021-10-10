@@ -36,7 +36,7 @@ class ClientThread(Thread):
                 name, pswd = params.split(' ', 1)
                 response = self.login(name, pswd)
             elif method == GETM:
-                response = self.login(name, pswd)
+                response = self.get_messages(name, pswd)
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
@@ -74,7 +74,7 @@ class ClientThread(Thread):
         if messages:
             return [RESOURCE_NOT_FOUND, "None"]
         else:
-            return [RESOURCE_NOT_FOUND, "None"]
+            return [ACTION_COMPLETE, '\n'.join(messages)]
 
 
 #endregion

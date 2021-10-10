@@ -84,7 +84,8 @@ def update():
         status, response = data.decode().split(' ', 1)
 
         # print response given by server
-        print(response)
+        if response != "None":
+            print(response)
 
         if (status == CONVERSATION_END):
             break
