@@ -7,7 +7,6 @@ import sys, select
 import auth
 from request_methods import *
 from status_codes import *
-from status_codes import INVALID_PARAMS
 
 #region client thread
 
@@ -16,8 +15,8 @@ class ClientThread(Thread):
         Thread.__init__(self)
         self.clientAddress = clientAddress
         self.clientSocket = clientSocket
-        self.alive = False
         self.authorised = False
+        self.user = None
         
         print("===== new connection created for: ", clientAddress)
         self.alive = True

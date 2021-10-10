@@ -1,14 +1,5 @@
 cred_path = "core/credentials.txt"
 
-# def get_pswd(tname):
-#     credsFile = open(cred_path, 'r')
-#     creds = credsFile.readlines()
-#     for cred in creds:
-#         name, pswd = cred.split()
-#         if name == tname:
-#             return pswd
-#     return None
-
 def add_cred(name, pswd):
     if cred_exists(name, pswd):
         return

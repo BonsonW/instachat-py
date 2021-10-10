@@ -1,6 +1,8 @@
-from typing import Type
-import pytest, unittest
+# external
+import pytest
 import os.path as path
+
+# internal
 from core import auth
 
 #region fixtures
