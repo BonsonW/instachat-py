@@ -1,5 +1,5 @@
 HELO = "HELO"
-PSWD = "PSWD"
+LOGN = "LOGN"
 MSSG = "MSSG"
 DATA = "DATA"
 QUIT = "QUIT"

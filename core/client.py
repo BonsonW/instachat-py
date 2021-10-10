@@ -4,20 +4,37 @@ import sys
 
 # internal
 from request_methods import *
+from status_codes import *
 
 #region client methods
 
 def login(clientSocket):
+    # enter username
     name = input("name: ")
     clientSocket.sendall(' '.join([HELO, name]).encode())
-    pswd = input("password: ")
-    clientSocket.sendall(' '.join([PSWD, pswd]).encode())
-    # retry if pswd invalid
+    data = clientSocket.recv(1024)
+    status, response = data.decode().split(' ', 1)
+    print(response)
+    status = INVALID_PARAMS
+
+    # enter password
+    while status != ACTION_COMPLETE:
+        pswd = input("password: ")
+        clientSocket.sendall(' '.join([LOGN, name, pswd]).encode())
+
+        data = clientSocket.recv(1024)
+        status, response = data.decode().split(' ', 1)
+        print(response)
+
 
 def logout(clientSocket):
-    pass
+    clientSocket.sendall(' '.join([QUIT, "None"]).encode())
+    data = clientSocket.recv(1024)
+    status, response = data.decode().split(' ', 1)
+    print(response)
 
 #endregion
+
 
 #region establish connection
 
@@ -40,18 +57,17 @@ login(clientSocket)
 #endregion
 
 
-
 #region client loop
 
 while True:
     # send method
-    message = input("===== please type any messsage you want to send to server: =====\n")
+    message = input("===== please type any message you want to send to server:\n")
     
     if message == "logout":
-        logout()
+        logout(clientSocket)
     # recieve response
     data = clientSocket.recv(1024)
-    status, response = data.decode()
+    status, response = data.decode().split(' ', 1)
 
     # print response given by server
     print(response)
