@@ -67,7 +67,7 @@ class ClientThread(Thread):
             if self.authorised:
                 response = ' '.join([ACTION_COMPLETE, "welcome", name, ", you are successfully logged in"])
             else:
-                response = ' '.join([INVALID_PARAMS, "welcome", name, ", you are successfully logged in"])
+                response = ' '.join([INVALID_PARAMS, "incorrect password provided for", name])
         else:
             auth.add_cred(name, pswd)
             self.authorised = True
