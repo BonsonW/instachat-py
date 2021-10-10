@@ -1,5 +1,6 @@
 # internal
-from core import auth, user
+from core import auth
+from core.user import User
 
 users = []
 
@@ -12,7 +13,9 @@ def get_user(name):
     return None
 
 def add_user(name):
-    users.append(user.User(name))
+    if user_initialized(name):
+        return
+    users.append(User(name))
 
 def user_initialized(name):
     return get_user(name) is not None
