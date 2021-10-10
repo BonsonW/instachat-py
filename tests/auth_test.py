@@ -3,7 +3,7 @@ import pytest
 import os.path as path
 
 # internal
-from core import auth
+from src import auth
 
 #region fixtures
 

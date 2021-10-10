@@ -1,0 +1,8 @@
+HELO = "HELO"
+LOGN = "LOGN"
+MSSG = "MSSG"
+DATA = "DATA"
+QUIT = "QUIT"
+ELSE = "ELSE"
+BLCK = "BLCK"
+GETM = "GETM"

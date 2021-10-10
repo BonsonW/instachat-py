@@ -2,7 +2,7 @@
 import pytest
 
 # internal
-from core import data, auth
+from src import data, auth
 
 
 #region fixtures

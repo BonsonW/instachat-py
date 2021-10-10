@@ -2,7 +2,7 @@
 import pytest
 
 # internal
-from core import message, data
+from src import message, data
 
 
 #region fixtures
