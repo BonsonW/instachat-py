@@ -1,25 +1,36 @@
-import pytest
+from typing import Type
+import pytest, unittest
 import os.path as path
 from core import auth
 
 #region fixtures
 
 @pytest.fixture
-def valid_user_cred():
+def existing_user_cred():
+    auth.add_cred("foo", "bar")
     return ("foo", "bar")
 
 @pytest.fixture
-def invalid_user_cred():
+def missing_user_cred():
     return ("bar", "foo")
 
 #endregion
 
 #region tests
 
-def test_get_pswd_success(valid_user_cred):
-    assert auth.get_pswd(valid_user_cred[0]) != None
+def test_credentials_file_exists():
+    assert path.exists(auth.cred_path) == True
 
-def test_get_pswd_fail(invalid_user_cred):
-    assert auth.get_pswd(invalid_user_cred[0]) == None
+def test_user_exists_success(existing_user_cred):
+    assert auth.user_exists(existing_user_cred[0]) == True
+
+def test_user_exists_fail(missing_user_cred):
+    assert auth.user_exists(missing_user_cred[0]) == False
+
+def test_cred_exists_success(existing_user_cred):
+    assert auth.cred_exists(existing_user_cred[0], existing_user_cred[1]) == True
+
+def test_cred_exists_fail(missing_user_cred):
+    assert auth.cred_exists(missing_user_cred[0], missing_user_cred[1]) == False
 
 #endregion
