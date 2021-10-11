@@ -9,12 +9,12 @@ from src import message, data
 
 @pytest.fixture
 def senderName():
-    data.add_user("foo")
+    data.add_user("foo", "bar")
     return "foo"
 
 @pytest.fixture
 def recipientName():
-    data.add_user("bar")
+    data.add_user("bar", "foo")
     return "bar"
 
 #endregion

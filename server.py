@@ -53,8 +53,8 @@ class ClientThread(Thread):
 #region request method processes
 
     def welcome(self, name):
-        if not auth.user_exists(name):
-            return [RESOURCE_NOT_FOUND, "hello", name, "please enter a password for your new account"]
+        if not data.user_exists(name):
+            return [USER_NOT_FOUND, "hello", name, "please enter a password for your new account"]
         return [ACTION_COMPLETE, "welcome", name, "please enter your password"]
         
         
@@ -63,14 +63,14 @@ class ClientThread(Thread):
             return [ACTION_COMPLETE, "you are already logged into account", name]
             
         # create new acc
-        if not auth.user_exists(name):
+        if not data.user_exists(name):
             auth.add_cred(name, pswd)
-            data.add_user(name)
+            data.add_user(name, pswd)
             self.authorised = True
             return [ACTION_COMPLETE, "welcome", name, "you are logged into your new account"]
 
         # or check password
-        self.authorised = auth.cred_exists(name, pswd)
+        self.authorised = data.password_match(name, pswd)
         if self.authorised:
             return [ACTION_COMPLETE, "welcome", name, "you are successfully logged in"]
         else:
@@ -81,11 +81,11 @@ class ClientThread(Thread):
         if messages:
             return [ACTION_COMPLETE, '\n'.join(messages)]
         else:
-            return [RESOURCE_NOT_FOUND, "None"]
+            return [USER_NOT_FOUND, "None"]
 
     def send_message(self, senderName, recipientName, messageBody):
-        if not data.user_initialized(recipientName):
-            return [RESOURCE_NOT_FOUND, "invalid user"]
+        if not data.user_exists(recipientName):
+            return [USER_NOT_FOUND, "invalid user"]
         message.send(senderName, recipientName, messageBody)
         return [ACTION_COMPLETE, "None"]
 

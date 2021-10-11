@@ -12,13 +12,17 @@ def get_user(name):
             return user
     return None
 
-def add_user(name):
-    if user_initialized(name):
+def add_user(name, pswd):
+    if user_exists(name):
         return
-    users.append(User(name))
+    users.append(User(name, pswd))
 
-def user_initialized(name):
+def user_exists(name):
     return get_user(name) is not None
+
+def password_match(name, pswd):
+    user = get_user(name)
+    return user.pswd == pswd
 
 #endregion
 
@@ -26,5 +30,5 @@ def user_initialized(name):
 with open(auth.cred_path, "r") as f:
     creds = f.readlines()
 for cred in creds:
-    name = cred.split()[0]
-    add_user(name)
+    name, pswd = cred.split()
+    add_user(name, pswd)

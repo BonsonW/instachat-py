@@ -1,7 +1,7 @@
 cred_path = "credentials.txt"
 
 def add_cred(name, pswd):
-    if cred_exists(name, pswd):
+    if password_match(name, pswd):
         return
     tcred = ' '.join([name, pswd])
     credsFile = open(cred_path, 'a')
@@ -16,7 +16,7 @@ def user_exists(tname):
             return True
     return False
 
-def cred_exists(name, pswd):
+def password_match(name, pswd):
     tcred = ' '.join([name, pswd])
     credsFile = open(cred_path, 'r')
     creds = credsFile.readlines()

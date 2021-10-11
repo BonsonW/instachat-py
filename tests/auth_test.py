@@ -30,9 +30,9 @@ def test_user_exists_fail(missing_user_cred):
     assert auth.user_exists(missing_user_cred[0]) == False
 
 def test_cred_exists_success(existing_user_cred):
-    assert auth.cred_exists(existing_user_cred[0], existing_user_cred[1]) == True
+    assert auth.password_match(existing_user_cred[0], existing_user_cred[1]) == True
 
 def test_cred_exists_fail(missing_user_cred):
-    assert auth.cred_exists(missing_user_cred[0], missing_user_cred[1]) == False
+    assert auth.password_match(missing_user_cred[0], missing_user_cred[1]) == False
 
 #endregion
