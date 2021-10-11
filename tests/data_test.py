@@ -45,6 +45,7 @@ def test_get_user_success(missing_user_cred):
 
 def test_user_exists_success(existing_user_cred):
     assert data.user_exists(existing_user_cred[0]) == True
+    assert data.user_exists(data.ALL_USERS) == True
 
 def test_get_user_success(missing_user_cred):
     assert data.user_exists(missing_user_cred[0]) == False
