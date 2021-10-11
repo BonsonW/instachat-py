@@ -7,7 +7,7 @@ import sys
 # internal
 from src.request_methods import *
 from src.status_codes import *
-from tests.message_test import recipientName
+from src.data import ALL_USERS
 
 name = input("name: ")
 
@@ -83,7 +83,7 @@ def update():
                         recipientName, messageBody = params.split(' ', 1)
                         send_message(clientSocket, name, recipientName, messageBody)
                     elif command == "broadcast":
-                        send_message(clientSocket, name, "All", params)
+                        send_message(clientSocket, name, ALL_USERS, params)
                     else:
                         print("==== invalid command")
                         continue

@@ -22,7 +22,7 @@ def remove_user(name):
     users.remove(user)
 
 def user_exists(name):
-    return get_user(name) is not None
+    return get_user(name) is not None or name == ALL_USERS
 
 def password_match(name, pswd):
     user = get_user(name)
