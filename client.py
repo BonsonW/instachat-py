@@ -82,6 +82,8 @@ def update():
                     if command == "message":
                         recipientName, messageBody = params.split(' ', 1)
                         send_message(clientSocket, name, recipientName, messageBody)
+                    elif command == "broadcast":
+                        send_message(clientSocket, name, "All", params)
                     else:
                         print("==== invalid command")
                         continue

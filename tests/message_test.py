@@ -26,4 +26,12 @@ def test_send_success(senderName, recipientName):
     assert len(message.get_messages(recipientName)) == 1
     assert len(message.get_messages(recipientName)) == 0
 
+def test_broadcast_success(senderName):
+    message.send(senderName, data.ALL_USERS, "this is a message")
+    for user in data.users:
+        if user.name != senderName:
+            assert len(message.get_messages(user.name)) == 1
+        else:
+            assert len(message.get_messages(user.name)) == 0
+
 #endregion

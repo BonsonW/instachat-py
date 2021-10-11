@@ -2,6 +2,8 @@
 from src import auth
 from src.user import User
 
+ALL_USERS = "All"
+
 users = []
 
 #region methods

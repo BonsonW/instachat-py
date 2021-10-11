@@ -55,6 +55,8 @@ class ClientThread(Thread):
     def welcome(self, name):
         if not data.user_exists(name):
             return [USER_NOT_FOUND, "hello", name, "please enter a password for your new account"]
+        if name == data.ALL_USERS:
+            return [INVALID_PARAMS, "invalid username entered"]
         return [ACTION_COMPLETE, "welcome", name, "please enter your password"]
         
         
