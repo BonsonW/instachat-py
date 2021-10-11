@@ -7,17 +7,18 @@ import sys
 # internal
 from src.request_methods import *
 from src.status_codes import *
+from tests.message_test import recipientName
 
 name = input("name: ")
 
 #region client methods
 
-def login(clientSocket):
+def login(clientSocket, name):
     # check username
     clientSocket.sendall(' '.join([HELO, name]).encode())
     data = clientSocket.recv(1024)
     status, response = data.decode().split(' ', 1)
-    print(response)
+    print("==== " + response)
     status = INVALID_PARAMS
 
     # enter password
@@ -27,8 +28,7 @@ def login(clientSocket):
 
         data = clientSocket.recv(1024)
         status, response = data.decode().split(' ', 1)
-        print(response)
-
+        print("==== " + response)
 
 def logout(clientSocket):
     clientSocket.sendall(' '.join([QUIT, "None"]).encode())
@@ -58,7 +58,7 @@ clientSocket = socket(AF_INET, SOCK_STREAM)
 # build connection with the server and send message to it
 clientSocket.connect(serverAddress)
 
-login(clientSocket)
+login(clientSocket, name)
 
 #endregion
 
@@ -77,8 +77,17 @@ def update():
             if command == "logout":
                 logout(clientSocket)
             else:
-                print("==== invalid command")
-                continue
+                try:
+                    command, params = command.split(' ', 1)
+                    if command == "message":
+                        recipientName, messageBody = params.split(' ', 1)
+                        send_message(clientSocket, name, recipientName, messageBody)
+                    else:
+                        print("==== invalid command")
+                        continue
+                except:
+                    print("==== invalid command")
+                    continue
         else:
             get_messages(clientSocket, name)
         
@@ -88,9 +97,10 @@ def update():
 
         # print response given by server
         if response != "None":
-            print(response)
+            print("==== " + response)
 
         if (status == CONNECTION_END):
+            clientSocket.close()
             break
 
 #end region
@@ -103,7 +113,3 @@ while True:
     commands.append(command)
     if command == "logout":
         break
-
-# close the socket
-clientSocket.close()
-

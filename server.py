@@ -7,6 +7,7 @@ import sys, select
 from src import auth, data, message
 from src.request_methods import *
 from src.status_codes import *
+from tests.message_test import recipientName, senderName
 
 #region client thread
 
@@ -42,7 +43,8 @@ class ClientThread(Thread):
             elif method == GETM:
                 response = self.get_messages(params)
             elif method == MSSG:
-                response = self.get_messages(params)
+                senderName, recipientName, messageBody = params.split(' ', 2)
+                response = self.send_message(senderName, recipientName, messageBody)
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
@@ -81,6 +83,11 @@ class ClientThread(Thread):
         else:
             return [RESOURCE_NOT_FOUND, "None"]
 
+    def send_message(self, senderName, recipientName, messageBody):
+        if not data.user_initialized(recipientName):
+            return [RESOURCE_NOT_FOUND, "invalid user"]
+        message.send(senderName, recipientName, messageBody)
+        return [ACTION_COMPLETE, "None"]
 
 #endregion
 
