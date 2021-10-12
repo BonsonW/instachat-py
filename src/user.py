@@ -1,5 +1,4 @@
 
-
 class User:
     def __init__(self, name, pswd):
         self.name = name
@@ -15,3 +14,8 @@ class User:
 
     def unblock(self, other):
         self.blocked.remove(other)
+    
+    def get_messages(self):
+        messages = self.messages.copy()
+        self.messages.clear()
+        return messages

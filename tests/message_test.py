@@ -33,7 +33,7 @@ def test_send_blocked(senderName, recipientName):
     assert len(message.get_messages(recipientName)) == 0
     recipient.unblock(senderName)
 
-def test_broadcast_success(senderName, recipientName):
+def test_broadcast_success(senderName):
     message.send(senderName, data.ALL_USERS, "this is a message")
     for user in data.users:
         if user.name != senderName:

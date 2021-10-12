@@ -12,8 +12,7 @@ def send(senderName, recipientName, messageBody):
 
 def get_messages(name):
     user = data.get_user(name)
-    messages = user.messages.copy()
-    user.messages.clear()
+    messages = user.get_messages()
     return messages
 
 def broadcast(senderName, messageBody):
