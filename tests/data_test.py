@@ -51,6 +51,20 @@ def test_user_exists_success(existing_user_cred):
 def test_get_user_success(missing_user_cred):
     assert data.user_exists(missing_user_cred[0]) == False
 
-# who online log tests
+def test_set_online_offline_success(existing_user_cred):
+    data.set_online(existing_user_cred[0])
+    assert len(data.online) == 1
+    data.set_offline(existing_user_cred[0])
+    assert len(data.online) == 0
+
+def test_get_online_since_before(existing_user_cred):
+    data.set_online(existing_user_cred[0])
+    assert len(data.get_online_since(time.time()-1)) == 1
+    data.set_offline(existing_user_cred[0])
+
+def test_get_online_since_after(existing_user_cred):
+    data.set_online(existing_user_cred[0])
+    assert len(data.get_online_since(time.time()+1)) == 0
+    data.set_offline(existing_user_cred[0])
 
 #endregion
