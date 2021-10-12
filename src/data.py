@@ -1,3 +1,6 @@
+# external
+from datetime import datetime
+
 # internal
 from src import auth
 from src.user import User
@@ -5,6 +8,7 @@ from src.user import User
 ALL_USERS = "All"
 
 users = []
+logs = []
 
 #region methods
 
@@ -29,6 +33,22 @@ def user_exists(name):
 def password_match(name, pswd):
     user = get_user(name)
     return user.pswd == pswd
+
+def set_online(name):
+    logs.append({"name": name, "since": datetime.now()})
+
+def set_offline(name):
+    for log in logs:
+        if log["name"] == name:
+            logs.remove(log)
+            return
+
+def get_online_since(timeStamp):
+    res = []
+    for log in logs:
+        if log["since"] > timeStamp:
+            res.append(log["name"])
+    return res
 
 #endregion
 

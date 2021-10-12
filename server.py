@@ -33,8 +33,7 @@ class ClientThread(Thread):
                 continue
 
             if method == QUIT:
-                self.alive = False
-                response = [CONNECTION_END, "ending connection, goodbye"]
+                response = self.logout(params)
             elif method == HELO:
                 response = self.welcome(params)
             elif method == LOGN:
@@ -55,6 +54,11 @@ class ClientThread(Thread):
 
 #region request method processes
 
+    def logout(self, name):
+        self.alive = False
+        data.set_offline(name)
+        return [CONNECTION_END, "ending connection, goodbye"]
+
     def welcome(self, name):
         if not data.user_exists(name):
             return [USER_NOT_FOUND, "hello", name, "please enter a password for your new account"]
@@ -71,12 +75,14 @@ class ClientThread(Thread):
         if not data.user_exists(name):
             auth.add_cred(name, pswd)
             data.add_user(name, pswd)
+            data.set_online(name)
             self.authorised = True
             return [ACTION_COMPLETE, "welcome", name, "you are logged into your new account"]
 
         # or check password
         self.authorised = data.password_match(name, pswd)
         if self.authorised:
+            data.set_online(name)
             return [ACTION_COMPLETE, "welcome", name, "you are successfully logged in"]
         else:
             return [INVALID_PARAMS, "incorrect password provided for", name]
@@ -104,6 +110,9 @@ class ClientThread(Thread):
         else:
             user.unblock(other)
             return [ACTION_COMPLETE, other, "is now blocked"]
+
+    # def who_else(self, name):
+
 #endregion
 
 #endregion

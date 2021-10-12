@@ -30,8 +30,8 @@ def login(clientSocket, name):
         status, response = data.decode().split(' ', 1)
         print("==== " + response)
 
-def logout(clientSocket):
-    clientSocket.sendall(' '.join([QUIT, "None"]).encode())
+def logout(clientSocket, name):
+    clientSocket.sendall(' '.join([QUIT, name]).encode())
 
 def get_messages(clientSocket, name):
     clientSocket.sendall(' '.join([GETM, name]).encode())
@@ -75,7 +75,7 @@ def update():
             
             # execute methods
             if command == "logout":
-                logout(clientSocket)
+                logout(clientSocket, name)
             else:
                 try:
                     command, params = command.split(' ', 1)
