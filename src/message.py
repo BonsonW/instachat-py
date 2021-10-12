@@ -5,8 +5,10 @@ def send(senderName, recipientName, messageBody):
     if (recipientName == data.ALL_USERS):
         broadcast(senderName, messageBody)
         return
-    recipent = data.get_user(recipientName)
-    recipent.messages.append(' '.join([senderName + ":", messageBody]))
+    recipient = data.get_user(recipientName)
+    if recipient.blocks(senderName):
+        return
+    recipient.messages.append(' '.join([senderName + ":", messageBody]))
 
 def get_messages(name):
     user = data.get_user(name)

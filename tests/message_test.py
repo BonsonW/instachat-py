@@ -34,4 +34,10 @@ def test_broadcast_success(senderName):
         else:
             assert len(message.get_messages(user.name)) == 0
 
+def test_send_fail(senderName, recipientName):
+    recipient = data.get_user(recipientName)
+    recipient.block(senderName)
+    message.send(senderName, recipientName, "this is a message")
+    assert len(message.get_messages(recipientName)) == 0
+
 #endregion

@@ -45,6 +45,9 @@ class ClientThread(Thread):
             elif method == MSSG:
                 senderName, recipientName, messageBody = params.split(' ', 2)
                 response = self.send_message(senderName, recipientName, messageBody)
+            elif method == BLCK:
+                name, other = params.split(' ', 1)
+                response = self.block(name, other)
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
@@ -91,6 +94,16 @@ class ClientThread(Thread):
         message.send(senderName, recipientName, messageBody)
         return [ACTION_COMPLETE, "None"]
 
+    def block(self, name, other):
+        if not data.user_exists(name):
+            return [USER_NOT_FOUND, "invalid user"]
+        user = data.get_user(name)
+        if not user.blocks(other):
+            user.block(other)
+            return [ACTION_COMPLETE, other, "is now blocked"]
+        else:
+            user.unblock(other)
+            return [ACTION_COMPLETE, other, "is now blocked"]
 #endregion
 
 #endregion
