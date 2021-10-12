@@ -15,6 +15,8 @@ def get_user(name):
     return None
 
 def add_user(name, pswd):
+    if user_exists(name):
+        return
     users.append(User(name, pswd))
 
 def remove_user(name):

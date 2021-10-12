@@ -26,7 +26,14 @@ def test_send_success(senderName, recipientName):
     assert len(message.get_messages(recipientName)) == 1
     assert len(message.get_messages(recipientName)) == 0
 
-def test_broadcast_success(senderName):
+def test_send_blocked(senderName, recipientName):
+    recipient = data.get_user(recipientName)
+    recipient.block(senderName)
+    message.send(senderName, recipientName, "this is a message")
+    assert len(message.get_messages(recipientName)) == 0
+    recipient.unblock(senderName)
+
+def test_broadcast_success(senderName, recipientName):
     message.send(senderName, data.ALL_USERS, "this is a message")
     for user in data.users:
         if user.name != senderName:
@@ -34,10 +41,15 @@ def test_broadcast_success(senderName):
         else:
             assert len(message.get_messages(user.name)) == 0
 
-def test_send_fail(senderName, recipientName):
+def test_broadcast_blocked(senderName, recipientName):
     recipient = data.get_user(recipientName)
     recipient.block(senderName)
-    message.send(senderName, recipientName, "this is a message")
-    assert len(message.get_messages(recipientName)) == 0
+    message.send(senderName, data.ALL_USERS, "this is a message")
+    for user in data.users:
+        if user.name != senderName and user.name != recipientName:
+            assert len(message.get_messages(user.name)) == 1
+        else:
+            assert len(message.get_messages(user.name)) == 0
+    recipient.unblock(senderName)
 
 #endregion
