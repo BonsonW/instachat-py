@@ -2,6 +2,7 @@
 from socket import *
 from threading import Thread
 import sys, select
+from time import strptime
 
 # internal
 from src import auth, data, message
@@ -47,6 +48,9 @@ class ClientThread(Thread):
             elif method == BLCK:
                 name, other = params.split(' ', 1)
                 response = self.block(name, other)
+            elif method == ELSE:
+                name, timeStamp = params.split(' ', 1)
+                response = self.who_else(name, float(timeStamp))
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
@@ -61,7 +65,7 @@ class ClientThread(Thread):
 
     def welcome(self, name):
         if not data.user_exists(name):
-            return [USER_NOT_FOUND, "hello", name, "please enter a password for your new account"]
+            return [NONE_FOUND, "hello", name, "please enter a password for your new account"]
         if name == data.ALL_USERS:
             return [INVALID_PARAMS, "invalid username entered"]
         return [ACTION_COMPLETE, "welcome", name, "please enter your password"]
@@ -92,17 +96,17 @@ class ClientThread(Thread):
         if messages:
             return [ACTION_COMPLETE, '\n'.join(messages)]
         else:
-            return [USER_NOT_FOUND, "None"]
+            return [NONE_FOUND, "None"]
 
     def send_message(self, senderName, recipientName, messageBody):
         if not data.user_exists(recipientName):
-            return [USER_NOT_FOUND, "invalid user"]
+            return [NONE_FOUND, "invalid user"]
         message.send(senderName, recipientName, messageBody)
         return [ACTION_COMPLETE, "None"]
 
     def block(self, name, other):
         if not data.user_exists(name):
-            return [USER_NOT_FOUND, "invalid user"]
+            return [NONE_FOUND, "invalid user"]
         user = data.get_user(name)
         if not user.blocks(other):
             user.block(other)
@@ -111,7 +115,13 @@ class ClientThread(Thread):
             user.unblock(other)
             return [ACTION_COMPLETE, other, "is now blocked"]
 
-    # def who_else(self, name):
+    def who_else(self, name, timeStamp):
+        res = data.get_online_since(timeStamp)
+        res.remove(name)
+        if res:
+            return [ACTION_COMPLETE, '\n'.join([res])]
+        else:
+            return [NONE_FOUND, "None"]
 
 #endregion
 
