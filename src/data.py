@@ -8,7 +8,7 @@ from src.user import User
 ALL_USERS = "All"
 
 users = []
-online = []
+logs = []
 
 #region methods
 
@@ -19,9 +19,8 @@ def get_user(name):
     return None
 
 def add_user(name, pswd):
-    if user_exists(name):
-        return
-    users.append(User(name, pswd))
+    if not user_exists(name):
+        users.append(User(name, pswd))
 
 def remove_user(name):
     user = get_user(name)
@@ -35,20 +34,29 @@ def password_match(name, pswd):
     return user.pswd == pswd
 
 def set_online(name):
-    online.append({"name": name, "since": time.time()})
+    get_user(name).online = True
+    logs.append({"name": name, "since": time.time()})
 
 def set_offline(name):
-    for log in online:
-        if log["name"] == name:
-            online.remove(log)
-            return
+    get_user(name).online = False
 
 def get_online_since(timeStamp):
-    res = []
-    for log in online:
-        if log["since"] > timeStamp:
-            res.append(log["name"])
-    return res
+    onlineSince = []
+    for log in logs:
+        if log["since"] > timeStamp and log["name"] not in onlineSince:
+            onlineSince.append(log["name"])
+    return onlineSince
+
+def get_online_now():
+    onlineNow = []
+    for user in users:
+        if user.online:
+            onlineNow.append(user)
+    return onlineNow
+
+def clear():
+    users.clear()
+    logs.clear()
 
 #endregion
 

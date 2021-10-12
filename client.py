@@ -2,6 +2,7 @@
 from threading import Thread
 from time import sleep
 from socket import *
+import time
 import sys
 
 # internal
@@ -38,6 +39,9 @@ def get_messages(clientSocket, name):
 
 def send_message(clientSocket, senderName, recipientName, message):
     clientSocket.sendall(' '.join([MSSG, senderName, recipientName, message]).encode())
+
+def who_else(clientSocket, name, time):
+    clientSocket.sendall(' '.join([ELSE, name, str(time)]).encode())
 
 #endregion
 
@@ -76,6 +80,8 @@ def update():
             # execute methods
             if command == "logout":
                 logout(clientSocket, name)
+            elif command == "whoelse":
+                who_else(clientSocket, name, "None")
             else:
                 try:
                     command, params = command.split(' ', 1)
@@ -84,6 +90,9 @@ def update():
                         send_message(clientSocket, name, recipientName, messageBody)
                     elif command == "broadcast":
                         send_message(clientSocket, name, ALL_USERS, params)
+                    elif command == "whoelsesince":
+                        offset = float(params)
+                        who_else(name, time.time()-offset)
                     else:
                         print("==== invalid command")
                         continue

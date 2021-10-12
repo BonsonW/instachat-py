@@ -1,4 +1,5 @@
 # external
+from os import times
 from socket import *
 from threading import Thread
 import sys, select
@@ -50,7 +51,10 @@ class ClientThread(Thread):
                 response = self.block(name, other)
             elif method == ELSE:
                 name, timeStamp = params.split(' ', 1)
-                response = self.who_else(name, float(timeStamp))
+                if (timeStamp == "None"):
+                    response = self.who_else_now(name)
+                else:
+                    response = self.who_else_since(name, float(timeStamp))
             else:
                 response = [INVALID_METHOD, "the method you have requested is not available"]
 
@@ -115,11 +119,19 @@ class ClientThread(Thread):
             user.unblock(other)
             return [ACTION_COMPLETE, other, "is now blocked"]
 
-    def who_else(self, name, timeStamp):
-        res = data.get_online_since(timeStamp)
-        res.remove(name)
-        if res:
-            return [ACTION_COMPLETE, '\n'.join([res])]
+    def who_else_since(self, name, timeStamp):
+        onlineSince = data.get_logs_since(timeStamp)
+        onlineSince.remove(name)
+        if onlineSince:
+            return [ACTION_COMPLETE, " previously logged on:\n", '\n'.join([onlineSince])]
+        else:
+            return [NONE_FOUND, "None"]
+
+    def who_else_now(self, name):
+        onlineNow = data.get_online_now()
+        onlineNow.remove(name)
+        if onlineNow:
+            return [ACTION_COMPLETE, " online now:\n", '\n'.join([onlineNow])]
         else:
             return [NONE_FOUND, "None"]
 

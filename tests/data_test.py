@@ -53,9 +53,10 @@ def test_get_user_success(missing_user_cred):
 
 def test_set_online_offline_success(existing_user_cred):
     data.set_online(existing_user_cred[0])
-    assert len(data.online) == 1
+    assert len(data.logs) == 1
+    assert len(data.get_online_now()) == True
     data.set_offline(existing_user_cred[0])
-    assert len(data.online) == 0
+    assert len(data.get_online_now()) == False
 
 def test_get_online_since_before(existing_user_cred):
     data.set_online(existing_user_cred[0])
