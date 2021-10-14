@@ -51,7 +51,7 @@ def get_online_now():
     onlineNow = []
     for user in users:
         if user.online:
-            onlineNow.append(user)
+            onlineNow.append(user.name)
     return onlineNow
 
 def clear():

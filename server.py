@@ -120,20 +120,21 @@ class ClientThread(Thread):
             return [ACTION_COMPLETE, other, "is now blocked"]
 
     def who_else_since(self, name, timeStamp):
-        onlineSince = data.get_logs_since(timeStamp)
-        onlineSince.remove(name)
+        onlineSince = data.get_online_since(timeStamp)
+        if name in onlineSince:
+            onlineSince.remove(name)
         if onlineSince:
-            return [ACTION_COMPLETE, " previously logged on:\n", '\n'.join([onlineSince])]
+            return [ACTION_COMPLETE, "previously logged on:\n", '\n'.join(onlineSince)]
         else:
-            return [NONE_FOUND, "None"]
+            return [ACTION_COMPLETE, "no users were logged in since this time"]
 
     def who_else_now(self, name):
         onlineNow = data.get_online_now()
         onlineNow.remove(name)
         if onlineNow:
-            return [ACTION_COMPLETE, " online now:\n", '\n'.join([onlineNow])]
+            return [ACTION_COMPLETE, " online now:\n", '\n'.join(onlineNow)]
         else:
-            return [NONE_FOUND, "None"]
+            return [ACTION_COMPLETE, "no other useres are online right now"]
 
 #endregion
 

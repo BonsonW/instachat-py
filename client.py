@@ -92,7 +92,7 @@ def update():
                         send_message(clientSocket, name, ALL_USERS, params)
                     elif command == "whoelsesince":
                         offset = float(params)
-                        who_else(name, time.time()-offset)
+                        who_else(clientSocket, name, time.time()-offset)
                     else:
                         print("==== invalid command")
                         continue

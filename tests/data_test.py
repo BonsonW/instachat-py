@@ -59,13 +59,15 @@ def test_set_online_offline_success(existing_user_cred):
     assert len(data.get_online_now()) == False
 
 def test_get_online_since_before(existing_user_cred):
+    ctime = time.time()
     data.set_online(existing_user_cred[0])
-    assert len(data.get_online_since(time.time()-1)) == 1
+    assert len(data.get_online_since(ctime-1)) == 1
     data.set_offline(existing_user_cred[0])
 
 def test_get_online_since_after(existing_user_cred):
     data.set_online(existing_user_cred[0])
-    assert len(data.get_online_since(time.time()+1)) == 0
+    ctime = time.time()
+    assert len(data.get_online_since(ctime+1)) == 0
     data.set_offline(existing_user_cred[0])
 
 #endregion
