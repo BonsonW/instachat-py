@@ -6,16 +6,20 @@ import time
 from src import data, auth
 
 
+class DummyThread:
+    def __init__(self, clientAddress):
+        self.clientAddress = clientAddress
+        self.user = None
+
 #region fixtures
 
 @pytest.fixture
-def existing_user_cred():
+def user_real_0():
     auth.add_cred("foo", "bar")
-    return ("foo", "bar")
-
+    return {"name": "foo", "pswd": "bar", "thread": DummyThread(('127.0.0.1', 5555))}
 @pytest.fixture
-def missing_user_cred():
-    return ("bar", "foo")
+def user_fake_0():
+    return {"name": "bar", "pswd": "foo", "thread": None}
 
 #endregion
 
@@ -26,48 +30,48 @@ def test_user_list_initialized():
     for user in data.users:
         assert auth.user_exists(user.name)
 
-def test_add_remove_user_success(missing_user_cred):
-    data.add_user(missing_user_cred[0], missing_user_cred[1])
-    assert data.user_exists(missing_user_cred[0]) == True
-    data.remove_user(missing_user_cred[0])
-    assert data.user_exists(missing_user_cred[0]) == False
+def test_add_remove_user_success(user_fake_0):
+    data.add_user(user_fake_0["name"], user_fake_0["pswd"])
+    assert data.user_exists(user_fake_0["name"]) == True
+    data.remove_user(user_fake_0["name"])
+    assert data.user_exists(user_fake_0["name"]) == False
 
-def test_password_match_success(existing_user_cred):
-    assert data.password_match(existing_user_cred[0], existing_user_cred[1]) == True
+def test_password_match_success(user_real_0):
+    assert data.password_match(user_real_0["name"], user_real_0["pswd"]) == True
 
-def test_password_match_fail(existing_user_cred):
-    assert data.password_match(existing_user_cred[0], existing_user_cred[0]) == False
+def test_password_match_fail(user_real_0):
+    assert data.password_match(user_real_0["name"], user_real_0["name"]) == False
 
-def test_get_user_success(existing_user_cred):
-    assert data.get_user(existing_user_cred[0]) is not None
+def test_get_user_success(user_real_0):
+    assert data.get_user(user_real_0["name"]) is not None
 
-def test_get_user_success(missing_user_cred):
-    assert data.get_user(missing_user_cred[0]) is None
+def test_get_user_success(user_fake_0):
+    assert data.get_user(user_fake_0["name"]) is None
 
-def test_user_exists_success(existing_user_cred):
-    assert data.user_exists(existing_user_cred[0]) == True
+def test_user_exists_success(user_real_0):
+    assert data.user_exists(user_real_0["name"]) == True
     assert data.user_exists(data.ALL_USERS) == True
 
-def test_get_user_success(missing_user_cred):
-    assert data.user_exists(missing_user_cred[0]) == False
+def test_get_user_success(user_fake_0):
+    assert data.user_exists(user_fake_0["name"]) == False
 
-def test_set_online_offline_success(existing_user_cred):
-    data.set_online(existing_user_cred[0])
+def test_set_online_offline_success(user_real_0):
+    data.set_online(user_real_0["name"], user_real_0["thread"])
     assert len(data.logs) == 1
     assert len(data.get_online_now()) == True
-    data.set_offline(existing_user_cred[0])
+    data.set_offline(user_real_0["name"], user_real_0["thread"])
     assert len(data.get_online_now()) == False
 
-def test_get_online_since_before(existing_user_cred):
+def test_get_online_since_before(user_real_0):
     ctime = time.time()
-    data.set_online(existing_user_cred[0])
+    data.set_online(user_real_0["name"], user_real_0["thread"])
     assert len(data.get_online_since(ctime-1)) == 1
-    data.set_offline(existing_user_cred[0])
+    data.set_offline(user_real_0["name"], user_real_0["thread"])
 
-def test_get_online_since_after(existing_user_cred):
-    data.set_online(existing_user_cred[0])
+def test_get_online_since_after(user_real_0):
+    data.set_online(user_real_0["name"], user_real_0["thread"])
     ctime = time.time()
     assert len(data.get_online_since(ctime+1)) == 0
-    data.set_offline(existing_user_cred[0])
+    data.set_offline(user_real_0["name"], user_real_0["thread"])
 
 #endregion

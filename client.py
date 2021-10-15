@@ -14,10 +14,10 @@ name = input("name: ")
 
 #region client methods
 
-def login(clientSocket, name):
+def login(sock, name):
     # check username
-    clientSocket.sendall(' '.join([HELO, name]).encode())
-    data = clientSocket.recv(1024)
+    sock.sendall(' '.join([HELO, name]).encode())
+    data = sock.recv(1024)
     status, response = data.decode().split(' ', 1)
     print("==== " + response)
     status = INVALID_PARAMS
@@ -25,23 +25,28 @@ def login(clientSocket, name):
     # enter password
     while status != ACTION_COMPLETE:
         pswd = input("password: ")
-        clientSocket.sendall(' '.join([LOGN, name, pswd]).encode())
+        sock.sendall(' '.join([LOGN, name, pswd]).encode())
 
-        data = clientSocket.recv(1024)
+        data = sock.recv(1024)
         status, response = data.decode().split(' ', 1)
         print("==== " + response)
 
-def logout(clientSocket, name):
-    clientSocket.sendall(' '.join([QUIT, name]).encode())
+def end_connection(sock, name):
+    sock.sendall(' '.join([QUIT, name]).encode())
 
-def get_messages(clientSocket, name):
-    clientSocket.sendall(' '.join([GETM, name]).encode())
+def get_messages(sock, name):
+    sock.sendall(' '.join([GETM, name]).encode())
 
-def send_message(clientSocket, senderName, recipientName, message):
-    clientSocket.sendall(' '.join([MSSG, senderName, recipientName, message]).encode())
+def send_message(sock, senderName, recipientName, message):
+    sock.sendall(' '.join([MSSG, senderName, recipientName, message]).encode())
 
-def who_else(clientSocket, name, time):
-    clientSocket.sendall(' '.join([ELSE, name, str(time)]).encode())
+def who_else(sock, name, time):
+    sock.sendall(' '.join([ELSE, name, str(time)]).encode())
+
+def new_connection(ip, port):
+    newSocket = socket(AF_INET, SOCK_STREAM)
+    newSocket.connect((ip, port))
+    return newSocket
 
 #endregion
 
@@ -54,13 +59,9 @@ def who_else(clientSocket, name, time):
 #     exit(0);
 serverHost = "127.0.0.1"
 serverPort = 8080
-serverAddress = (serverHost, serverPort)
 
 # define a socket for the client side, it would be used to communicate with the server
-clientSocket = socket(AF_INET, SOCK_STREAM)
-
-# build connection with the server and send message to it
-clientSocket.connect(serverAddress)
+clientSocket = new_connection(serverHost, serverPort)
 
 login(clientSocket, name)
 
@@ -79,7 +80,7 @@ def update():
             
             # execute methods
             if command == "logout":
-                logout(clientSocket, name)
+                end_connection(clientSocket, name)
             elif command == "whoelse":
                 who_else(clientSocket, name, "None")
             else:

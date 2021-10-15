@@ -5,7 +5,6 @@ class User:
         self.pswd = pswd
         self.messages = []
         self.blocked = []
-        self.online = False
 
     def blocks(self, other):
         return other in self.blocked

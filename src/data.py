@@ -7,6 +7,7 @@ from src.user import User
 
 ALL_USERS = "All"
 
+clientThreads = []
 users = []
 logs = []
 
@@ -33,11 +34,12 @@ def password_match(name, pswd):
     user = get_user(name)
     return user.pswd == pswd
 
-def set_online(name):
-    get_user(name).online = True
+def set_online(name, clientThread):
+    clientThreads.append(clientThread)
     logs.append({"name": name, "since": time.time()})
 
-def set_offline(name):
+def set_offline(name, clientThread):
+    clientThreads.remove(clientThread)
     get_user(name).online = False
 
 def get_online_since(timeStamp):
@@ -49,10 +51,21 @@ def get_online_since(timeStamp):
 
 def get_online_now():
     onlineNow = []
-    for user in users:
-        if user.online:
-            onlineNow.append(user.name)
+    for clientThread in clientThreads:
+        onlineNow.append(clientThread.user)  
     return onlineNow
+
+def get_address(name):
+    clientThread = get_clientThread(name)
+    if clientThread is None:
+        return None
+    return clientThread.address
+
+def get_clientThread(name):
+    for clientThread in clientThreads:
+        if clientThread.user == name:
+            return clientThread
+    return None
 
 def clear():
     users.clear()
