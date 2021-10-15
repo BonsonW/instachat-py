@@ -59,7 +59,7 @@ def get_address(name):
     clientThread = get_clientThread(name)
     if clientThread is None:
         return None
-    return clientThread.address
+    return clientThread.clientAddress
 
 def get_clientThread(name):
     for clientThread in clientThreads:
