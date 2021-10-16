@@ -7,8 +7,9 @@ from src import data, auth
 
 
 class DummyThread:
-    def __init__(self, clientAddress, user):
+    def __init__(self, clientAddress, user, listeningPort):
         self.clientAddress = clientAddress
+        self.listeningPort = listeningPort
         self.user = user
 
 #region fixtures
@@ -16,7 +17,7 @@ class DummyThread:
 @pytest.fixture
 def user_real_0():
     auth.add_cred("foo", "bar")
-    return {"name": "foo", "pswd": "bar", "thread": DummyThread(('127.0.0.1', 5555), "foo")}
+    return {"name": "foo", "pswd": "bar", "thread": DummyThread(('127.0.0.1', 5555), "foo", 9998)}
 @pytest.fixture
 def user_fake_0():
     return {"name": "bar", "pswd": "foo", "thread": None}

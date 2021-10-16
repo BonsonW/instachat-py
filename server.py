@@ -19,6 +19,7 @@ class ClientThread(Thread):
         self.clientAddress = clientAddress
         self.clientSocket = clientSocket
         self.authorised = False
+        self.listeningPort = None
         self.user = None
         
         print("===== new connection created for: ", clientAddress)
@@ -45,6 +46,8 @@ class ClientThread(Thread):
                 elif method == BLCK:
                     user, other = params.split(' ', 1)
                     response = self.block(user, other)
+                elif method == ADDR:
+                    response = self.req_address(params)
                 elif method == ELSE:
                     user, timeStamp = params.split(' ', 1)
                     if (timeStamp == "None"):
@@ -58,7 +61,8 @@ class ClientThread(Thread):
                     self.alive = False
                     response = [CONNECTION_END, "ending connection, goodbye"]
                 elif method == HELO:
-                    response = self.welcome(params)
+                    user, listeningPort = params.split(' ', 1)
+                    response = self.welcome(user, int(listeningPort))
                 elif method == LOGN:
                     user, pswd = params.split(' ', 1)
                     response = self.login(user, pswd)
@@ -71,10 +75,11 @@ class ClientThread(Thread):
 
     def logout(self, user):
         self.alive = False
-        data.set_offline(user)
+        data.set_offline(user, self)
         return [CONNECTION_END, "ending connection, goodbye"]
 
-    def welcome(self, user):
+    def welcome(self, user, listeningPort):
+        self.listeningPort = listeningPort
         if not data.user_exists(user):
             return [NONE_FOUND, "hello", user, "please enter a password for your new account"]
         if user == data.ALL_USERS:
@@ -91,14 +96,14 @@ class ClientThread(Thread):
         if not data.user_exists(user):
             auth.add_cred(user, pswd)
             data.add_user(user, pswd)
-            data.set_online(user)
+            data.set_online(user, self)
             self.authorised = True
             return [ACTION_COMPLETE, "welcome", user, "you are logged into your new account"]
 
         # or check password
         self.authorised = data.password_match(user, pswd)
         if self.authorised:
-            data.set_online(user)
+            data.set_online(user, self)
             return [ACTION_COMPLETE, "welcome", user, "you are successfully logged in"]
         else:
             return [INVALID_PARAMS, "incorrect password provided for", user]
