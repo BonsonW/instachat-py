@@ -95,7 +95,7 @@ def start_private(sock, senderName, recipientName):
         peerThread = PeerThread(peerSocket, recipientName)
         peerThreads.append(peerThread)
         peerThread.start()
-        print("==== new private connection started with " + recipientName)
+        print("==== private connection started with " + recipientName)
     else:
         print("==== " + response)
 
@@ -111,6 +111,9 @@ def get_peer_socket(user):
         if peerThread.user == user:
             return peerThread.socket
     return None
+
+def deny_request(sock, user):
+    sock.sendall(' '.join([DENY, user]).encode())
 
 #endregion
 
@@ -138,25 +141,28 @@ login(clientSocket, name, welcomeSocket.getsockname()[1])
 #region update loop
 
 commands = []
+waiting = False
 
 def update_loop():
-    wait = False
-
+    global waiting
     while True:
 
         sleep(1)
+        if waiting:
+            continue
 
         # execute commands
         if commands:
             command = commands.pop()
-            wait = False
             
             # execute methods
             if command == "logout":
                 end_connection(clientSocket, name)
                 # end connection with all peers
-            elif command == "y" or command == "n":
-                clientSocket.sendall(' '.join([ACTION_COMPLETE, command]).encode())
+            elif command == "y":
+                commands.pop(1)
+            elif command == "n":
+                commands.pop(0)
             elif command == "whoelse":
                 who_else(clientSocket, name, "None")
             else:
@@ -177,13 +183,15 @@ def update_loop():
                         recipientName, messageBody = params.split(' ', 1)
                         send_private(recipientName, messageBody)
                         continue
+                    elif command == "deny":
+                        deny_request(clientSocket, params)
                     else:
                         print("==== invalid command")
                         continue
                 except:
                     print("==== invalid command")
                     continue
-        elif not wait:
+        else:
             get_messages(clientSocket, name)
         
         # recieve responses from server
@@ -194,8 +202,11 @@ def update_loop():
             continue
 
         # print response given by server
-        if status == CLIENT_QUESTION:
-            wait = True
+        if status == CONFIRMATION:
+            body, accept, deny = body.split(" |", 2)
+            commands.append(accept)
+            commands.append(deny)
+            waiting = True
         if body != "None":
             print("==== " + body)
         
@@ -223,6 +234,7 @@ welcomeThread.start()
 
 while True:
     clientInput = input()
+    waiting = False
     commands.append(clientInput)
     if clientInput == "logout":
         break

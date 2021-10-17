@@ -21,7 +21,7 @@ class ClientThread(Thread):
         self.authorised = False
         self.listeningPort = None
         self.user = None
-        self.privateRequests = []
+        self.peerRequests = []
         
         print("===== new connection created for: ", clientAddress)
         self.alive = True
@@ -55,6 +55,8 @@ class ClientThread(Thread):
                         response = self.who_else_now(user)
                     else:
                         response = self.who_else_since(user, float(timeStamp))
+                elif method == DENY:
+                    response = self.deny_request(params)
                 else:
                     response = [INVALID_METHOD, "the method you have requested is not available"]
             else:
@@ -155,27 +157,26 @@ class ClientThread(Thread):
         addr = data.get_address(user)
         if addr is None:
             return [NONE_FOUND, "user not currently online"]
+
+        peerThread = data.get_clientThread(user)
+        peerSock = peerThread.clientSocket
         
-        # send request to target client
-        recipThread = data.get_clientThread(user)
-        recipSock = recipThread.clientSocket
-        recipSock.send(' '.join([CLIENT_QUESTION, "would you like to start a private connection with", self.user, "? (y/n)"]).encode())
+        # if not queued up as peer, send request to recipient
+        # otherwise start connection
+        if user not in self.peerRequests:
+            peerSock.send(' '.join([CONFIRMATION, "would you like to start a private connection with", self.user, "? (y/n)", "|startprivate", self.user, "|deny", self.user]).encode())
+            if self.user not in peerThread.peerRequests:
+                peerThread.peerRequests.append(self.user)
+            return [NONE_FOUND, "private connection has been requested"]
+        peerSock.send(' '.join([ACTION_COMPLETE, "private connection started with", self.user]).encode())
+        return [ACTION_COMPLETE, addr[0], str(addr[1])]
 
-        # if they respond with yes, send address
-        response = recipSock.recv(1024)
-        try:
-            status, params = response.decode().split(' ', 1)
-            if status == ACTION_COMPLETE and params == "y":
-                recipSock.send(' '.join([ACTION_COMPLETE, "starting connection with", self.user]).encode())
-                return [ACTION_COMPLETE, addr[0], str(addr[1])]
-            else:
-                recipSock.send(' '.join([ACTION_COMPLETE, "connection declined"]).encode())
-        except:
-            pass
-        return [NONE_FOUND, user, "has denied your connection request"]
-
-        
-
+    def deny_request(self, user):
+        if user in self.peerRequests:
+            self.peerRequests.remove(user)
+            message.send("server", user, ' '.join([self.user, "has denied your request"]))
+            return [ACTION_COMPLETE, "None"]
+        return [NONE_FOUND, "invalid user"]
 #endregion
 
 #endregion
