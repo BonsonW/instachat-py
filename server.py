@@ -21,6 +21,7 @@ class ClientThread(Thread):
         self.authorised = False
         self.listeningPort = None
         self.user = None
+        self.privateRequests = []
         
         print("===== new connection created for: ", clientAddress)
         self.alive = True
@@ -85,8 +86,7 @@ class ClientThread(Thread):
         if user == data.ALL_USERS:
             return [INVALID_PARAMS, "invalid username entered"]
         return [ACTION_COMPLETE, "welcome", user, "please enter your password"]
-        
-        
+               
     def login(self, user, pswd):
         self.user = user
         if self.authorised:
@@ -155,8 +155,26 @@ class ClientThread(Thread):
         addr = data.get_address(user)
         if addr is None:
             return [NONE_FOUND, "user not currently online"]
-        # send confimration to addr before sending address
-        return [ACTION_COMPLETE, addr[0], str(addr[1])]
+        
+        # send request to target client
+        recipThread = data.get_clientThread(user)
+        recipSock = recipThread.clientSocket
+        recipSock.send(' '.join([CLIENT_QUESTION, "would you like to start a private connection with", self.user, "? (y/n)"]).encode())
+
+        # if they respond with yes, send address
+        response = recipSock.recv(1024)
+        try:
+            status, params = response.decode().split(' ', 1)
+            if status == ACTION_COMPLETE and params == "y":
+                recipSock.send(' '.join([ACTION_COMPLETE, "starting connection with", self.user]).encode())
+                return [ACTION_COMPLETE, addr[0], str(addr[1])]
+            else:
+                recipSock.send(' '.join([ACTION_COMPLETE, "connection declined"]).encode())
+        except:
+            pass
+        return [NONE_FOUND, user, "has denied your connection request"]
+
+        
 
 #endregion
 
@@ -181,8 +199,8 @@ print("===== waiting for connection request from clients...")
 
 while True:
     serverSocket.listen()
-    clientSockt, clientAddress = serverSocket.accept()
-    clientThread = ClientThread(clientAddress, clientSockt)
+    clientSocket, clientAddress = serverSocket.accept()
+    clientThread = ClientThread(clientAddress, clientSocket)
     clientThread.start()
     
 #endregion

@@ -26,6 +26,8 @@ class PeerThread(Thread):
         
     def run(self):
         while self.alive:
+            sleep(1)
+
             data = self.socket.recv(1024)
             try:
                 method, params = data.decode().split(' ', 1)
@@ -34,7 +36,7 @@ class PeerThread(Thread):
             
             if method == HELO:
                 self.user = params
-            if method == QUIT:
+            elif method == QUIT:
                 self.alive = False
             elif method == MSSG:
                 print(self.user + ": " + params)
@@ -137,56 +139,73 @@ login(clientSocket, name, welcomeSocket.getsockname()[1])
 
 commands = []
 
-def update():
+def update_loop():
+    wait = False
+
     while True:
+
         sleep(1)
+
         # execute commands
         if commands:
             command = commands.pop()
+            wait = False
             
             # execute methods
             if command == "logout":
                 end_connection(clientSocket, name)
+                # end connection with all peers
+            elif command == "y" or command == "n":
+                clientSocket.sendall(' '.join([ACTION_COMPLETE, command]).encode())
             elif command == "whoelse":
                 who_else(clientSocket, name, "None")
             else:
-                command, params = command.split(' ', 1)
-                if command == "message":
-                    recipientName, messageBody = params.split(' ', 1)
-                    send_message(clientSocket, name, recipientName, messageBody)
-                elif command == "broadcast":
-                    send_message(clientSocket, name, ALL_USERS, params)
-                elif command == "whoelsesince":
-                    offset = float(params)
-                    who_else(clientSocket, name, time.time()-offset)
-                elif command == "startprivate":
-                    start_private(clientSocket, name, params)
-                    continue
-                elif command == "private":
-                    recipientName, messageBody = params.split(' ', 1)
-                    send_private(recipientName, messageBody)
-                    continue
-                else:
+                try:
+                    command, params = command.split(' ', 1)
+                    if command == "message":
+                        recipientName, messageBody = params.split(' ', 1)
+                        send_message(clientSocket, name, recipientName, messageBody)
+                    elif command == "broadcast":
+                        send_message(clientSocket, name, ALL_USERS, params)
+                    elif command == "whoelsesince":
+                        offset = float(params)
+                        who_else(clientSocket, name, time.time()-offset)
+                    elif command == "startprivate":
+                        start_private(clientSocket, name, params)
+                        continue
+                    elif command == "private":
+                        recipientName, messageBody = params.split(' ', 1)
+                        send_private(recipientName, messageBody)
+                        continue
+                    else:
+                        print("==== invalid command")
+                        continue
+                except:
                     print("==== invalid command")
                     continue
-        else:
+        elif not wait:
             get_messages(clientSocket, name)
         
-        # recieve response
+        # recieve responses from server
         data = clientSocket.recv(1024)
-        status, response = data.decode().split(' ', 1)
+        try:
+            status, body = data.decode().split(' ', 1)
+        except:
+            continue
 
         # print response given by server
-        if response != "None":
-            print("==== " + response)
-
+        if status == CLIENT_QUESTION:
+            wait = True
+        if body != "None":
+            print("==== " + body)
+        
         if (status == CONNECTION_END):
             clientSocket.close()
             break
 
 
 def listen():
-    # listen for new connection
+    # listen for new peer connection
     while True:
         welcomeSocket.listen()
         peerSocket, peerAddress = welcomeSocket.accept()
@@ -196,14 +215,14 @@ def listen():
 
 #end region
 
-updateThread = Thread(target=update)
+updateThread = Thread(target=update_loop)
 updateThread.start()
 
 welcomeThread = Thread(target=listen)
 welcomeThread.start()
 
 while True:
-    command = input()
-    commands.append(command)
-    if command == "logout":
+    clientInput = input()
+    commands.append(clientInput)
+    if clientInput == "logout":
         break
