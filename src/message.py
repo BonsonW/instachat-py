@@ -17,7 +17,6 @@ def get_messages(name):
 
 def broadcast(senderName, messageBody):
     success = True
-    for name in data.get_online_now():
-        if name != senderName:
-            success = success and send(senderName, name, messageBody)
+    for name in data.get_online_now(senderName):
+        success = success and send(senderName, name, messageBody)
     return success

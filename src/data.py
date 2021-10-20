@@ -7,6 +7,8 @@ from src.user import User
 
 ALL_USERS = "All"
 
+startTime = time.time()
+
 clientThreads = []
 users = []
 logs = []
@@ -49,10 +51,12 @@ def get_online_since(timeStamp):
             onlineSince.append(log["name"])
     return onlineSince
 
-def get_online_now():
+def get_online_now(name):
     onlineNow = []
+    user = get_user(name)
     for clientThread in clientThreads:
-        onlineNow.append(clientThread.user)  
+        if clientThread.user != name and not user.blocks(clientThread.user):
+            onlineNow.append(clientThread.user)  
     return onlineNow
 
 def get_address(name):

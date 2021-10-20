@@ -52,21 +52,26 @@ def test_get_user_success(user_fake_0):
 def test_set_online_offline_success(user_real_0):
     data.set_online(user_real_0["name"], user_real_0["thread"])
     assert len(data.logs) == 1
-    assert len(data.get_online_now()) == True
+    assert len(data.clientThreads) == 1
     data.set_offline(user_real_0["name"], user_real_0["thread"])
-    assert len(data.get_online_now()) == False
+    assert len(data.clientThreads) == 0
 
-def test_get_online_since_before(user_real_0):
+def test_get_online_since_before_login(user_real_0):
     ctime = time.time()
     data.set_online(user_real_0["name"], user_real_0["thread"])
-    assert len(data.get_online_since(ctime-1)) == 1
     data.set_offline(user_real_0["name"], user_real_0["thread"])
+    assert len(data.get_online_since(ctime-1)) == 1
 
-def test_get_online_since_after(user_real_0):
+def test_get_online_since_after_login(user_real_0):
     data.set_online(user_real_0["name"], user_real_0["thread"])
+    data.set_offline(user_real_0["name"], user_real_0["thread"])
     ctime = time.time()
     assert len(data.get_online_since(ctime+1)) == 0
+
+def test_get_online_since_before_server(user_real_0):
+    data.set_online(user_real_0["name"], user_real_0["thread"])
     data.set_offline(user_real_0["name"], user_real_0["thread"])
+    assert len(data.get_online_since(0)) == 1
 
 def test_get_address_success(user_real_0):
     data.set_online(user_real_0["name"], user_real_0["thread"])
