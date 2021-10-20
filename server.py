@@ -3,7 +3,7 @@ from os import times
 from socket import *
 from threading import Thread
 import sys, select
-from time import strptime
+from time import sleep, strptime, time
 
 # internal
 from src import auth, data, message
@@ -22,6 +22,8 @@ class ClientThread(Thread):
         self.listeningPort = None
         self.user = None
         self.peerRequests = []
+        self.attempts = 0
+        self.timeout = 0
         
         print("===== new connection created for: ", clientAddress)
         self.alive = True
@@ -29,13 +31,18 @@ class ClientThread(Thread):
     def run(self):
         response = []
         while self.alive:
+
             data = self.clientSocket.recv(1024)
+            if self.timeout > 0:
+                sleep(1)
+                self.timeout -= 1
+                continue
 
             try:
                 method, params = data.decode().split(' ', 1)
             except:
                 continue
-                
+
             if self.authorised:
                 if method == QUIT:
                     response = self.logout(params)
@@ -106,11 +113,17 @@ class ClientThread(Thread):
             return [ACTION_COMPLETE, "welcome", user, "you are logged into your new account"]
 
         # or check password
+        # timeout after 3 failed attempts
         self.authorised = data.password_match(user, pswd)
         if self.authorised:
             data.set_online(user, self)
             return [ACTION_COMPLETE, "welcome", user, "you are successfully logged in"]
         else:
+            self.attempts += 1
+            if self.attempts >= 3:
+                self.attempts = 0
+                self.timeout = blockDuration
+                return [INVALID_PARAMS, "incorrect password, you will be timed out", "seconds"]
             return [INVALID_PARAMS, "incorrect password provided for", user]
     
     def get_messages(self, user):
@@ -200,6 +213,8 @@ class ClientThread(Thread):
 serverHost = "127.0.0.1"
 serverPort =  8080 # int(sys.argv[1])
 serverAddress = (serverHost, serverPort)
+
+blockDuration = 10
 
 # define socket for the server side and bind address
 serverSocket = socket(AF_INET, SOCK_STREAM)
