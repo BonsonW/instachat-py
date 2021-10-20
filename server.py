@@ -120,8 +120,12 @@ class ClientThread(Thread):
     def send_message(self, senderName, recipientName, messageBody):
         if not data.user_exists(recipientName):
             return [NONE_FOUND, "invalid user"]
-        message.send(senderName, recipientName, messageBody)
-        return [ACTION_COMPLETE, "None"]
+        if message.send(senderName, recipientName, messageBody):
+            return [ACTION_COMPLETE, "None"]
+        elif recipientName == data.ALL_USERS:
+            return [ACTION_COMPLETE, "not all users were able to recieve your message"]
+        else:
+            return [NONE_FOUND, "you've been blocked by", recipientName]
 
     def block(self, user, other):
         if not data.user_exists(user):

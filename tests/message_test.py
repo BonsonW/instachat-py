@@ -27,20 +27,20 @@ def user_real_0():
 #region tests
 
 def test_send_success(senderName, recipientName):
-    message.send(senderName, recipientName, "this is a message")
+    assert message.send(senderName, recipientName, "this is a message") == True
     assert len(message.get_messages(recipientName)) == 1
     assert len(message.get_messages(recipientName)) == 0
 
 def test_send_blocked(senderName, recipientName):
     recipient = data.get_user(recipientName)
     recipient.block(senderName)
-    message.send(senderName, recipientName, "this is a message")
+    assert message.send(senderName, recipientName, "this is a message") == False
     assert len(message.get_messages(recipientName)) == 0
     recipient.unblock(senderName)
 
 def test_broadcast_success(senderName, user_real_0):
     data.set_online(user_real_0["name"], user_real_0["thread"])
-    message.send(senderName, data.ALL_USERS, "this is a message")
+    assert message.send(senderName, data.ALL_USERS, "this is a message") == True
     for user in data.users:
         if user.name == user_real_0["name"]:
             assert len(message.get_messages(user.name)) == 1
@@ -49,16 +49,15 @@ def test_broadcast_success(senderName, user_real_0):
     data.set_offline(user_real_0["name"], user_real_0["thread"])
 
 def test_broadcast_offline(senderName):
-    message.send(senderName, data.ALL_USERS, "this is a message")
+    assert message.send(senderName, data.ALL_USERS, "this is a message") == True
     for user in data.users:
         assert len(message.get_messages(user.name)) == 0
             
-
 def test_broadcast_blocked(senderName, recipientName, user_real_0):
     data.set_online(user_real_0["name"], user_real_0["thread"])
     recipient = data.get_user(recipientName)
     recipient.block(senderName)
-    message.send(senderName, data.ALL_USERS, "this is a message")
+    assert message.send(senderName, data.ALL_USERS, "this is a message") == False
     for user in data.users:
         assert len(message.get_messages(user.name)) == 0
     recipient.unblock(senderName)
