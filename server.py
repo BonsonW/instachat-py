@@ -47,6 +47,9 @@ class ClientThread(Thread):
                 elif method == BLCK:
                     user, other = params.split(' ', 1)
                     response = self.block(user, other)
+                elif method == NBLK:
+                    user, other = params.split(' ', 1)
+                    response = self.unblock(user, other)
                 elif method == ADDR:
                     response = self.req_address(params)
                 elif method == ELSE:
@@ -127,16 +130,20 @@ class ClientThread(Thread):
         else:
             return [NONE_FOUND, "you've been blocked by", recipientName]
 
-    def block(self, user, other):
-        if not data.user_exists(user):
+    def block(self, senderName, recipientName):
+        if not data.user_exists(senderName) or senderName == recipientName:
             return [NONE_FOUND, "invalid user"]
-        user = data.get_user(user)
-        if not user.blocks(other):
-            user.block(other)
-            return [ACTION_COMPLETE, other, "is now blocked"]
-        else:
-            user.unblock(other)
-            return [ACTION_COMPLETE, other, "is now unblocked"]
+        sender = data.get_user(senderName)
+        sender.block(recipientName)
+        return [ACTION_COMPLETE, recipientName, "is now blocked"]
+    
+    def unblock(self, senderName, recipientName):
+        if not data.user_exists(senderName) or senderName == recipientName:
+            return [NONE_FOUND, "invalid user"]
+        sender = data.get_user(senderName)
+        if sender.unblock(recipientName):
+            return [ACTION_COMPLETE, recipientName, "is now unblocked"]
+        return [NONE_FOUND, recipientName, "is already unblocked"]
 
     def who_else_since(self, user, timeStamp):
         onlineSince = data.get_online_since(timeStamp)
@@ -197,9 +204,6 @@ serverAddress = (serverHost, serverPort)
 # define socket for the server side and bind address
 serverSocket = socket(AF_INET, SOCK_STREAM)
 serverSocket.bind(serverAddress)
-
-print("\n===== server is running")
-print("===== waiting for connection request from clients...")
 
 while True:
     serverSocket.listen()

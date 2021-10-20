@@ -115,6 +115,12 @@ def get_peer_socket(user):
 def deny_request(sock, user):
     sock.sendall(' '.join([DENY, user]).encode())
 
+def block(sock, senderName, recipientName):
+    sock.sendall(' '.join([BLCK, senderName, recipientName]).encode())
+
+def unblock(sock, senderName, recipientName):
+    sock.sendall(' '.join([NBLK, senderName, recipientName]).encode())
+
 #endregion
 
 
@@ -185,6 +191,10 @@ def update_loop():
                         continue
                     elif command == "deny":
                         deny_request(clientSocket, params)
+                    elif command == "block":
+                        block(clientSocket, name, params)
+                    elif command == "unblock":
+                        unblock(clientSocket, name, params)
                     else:
                         print("==== invalid command")
                         continue
