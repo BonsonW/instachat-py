@@ -2,8 +2,8 @@
 import pytest
 
 # internal
-from src import message, data
-
+from src import message, data, auth
+from tests.test_helper import DummyThread
 
 #region fixtures
 
@@ -14,8 +14,13 @@ def senderName():
 
 @pytest.fixture
 def recipientName():
-    data.add_user("bar", "foo")
-    return "bar"
+    data.add_user("real", "guy")
+    return "real"
+
+@pytest.fixture
+def user_real_0():
+    auth.add_cred("real", "guy")
+    return {"name": "real", "pswd": "guy", "thread": DummyThread(('127.0.0.1', 5555), "real", 9998)}
 
 #endregion
 
@@ -33,23 +38,30 @@ def test_send_blocked(senderName, recipientName):
     assert len(message.get_messages(recipientName)) == 0
     recipient.unblock(senderName)
 
-def test_broadcast_success(senderName):
+def test_broadcast_success(senderName, user_real_0):
+    data.set_online(user_real_0["name"], user_real_0["thread"])
     message.send(senderName, data.ALL_USERS, "this is a message")
     for user in data.users:
-        if user.name != senderName:
+        if user.name == user_real_0["name"]:
             assert len(message.get_messages(user.name)) == 1
         else:
             assert len(message.get_messages(user.name)) == 0
+    data.set_offline(user_real_0["name"], user_real_0["thread"])
 
-def test_broadcast_blocked(senderName, recipientName):
+def test_broadcast_offline(senderName):
+    message.send(senderName, data.ALL_USERS, "this is a message")
+    for user in data.users:
+        assert len(message.get_messages(user.name)) == 0
+            
+
+def test_broadcast_blocked(senderName, recipientName, user_real_0):
+    data.set_online(user_real_0["name"], user_real_0["thread"])
     recipient = data.get_user(recipientName)
     recipient.block(senderName)
     message.send(senderName, data.ALL_USERS, "this is a message")
     for user in data.users:
-        if user.name != senderName and user.name != recipientName:
-            assert len(message.get_messages(user.name)) == 1
-        else:
-            assert len(message.get_messages(user.name)) == 0
+        assert len(message.get_messages(user.name)) == 0
     recipient.unblock(senderName)
+    data.set_offline(user_real_0["name"], user_real_0["thread"])
 
 #endregion

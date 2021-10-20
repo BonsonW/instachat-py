@@ -1,6 +1,7 @@
 # internal
 from src import data
 
+# return True if all users sent message successfully
 def send(senderName, recipientName, messageBody):
     if (recipientName == data.ALL_USERS):
         broadcast(senderName, messageBody)
@@ -15,7 +16,8 @@ def get_messages(name):
     messages = user.get_messages()
     return messages
 
+# return True if all users sent message successfully
 def broadcast(senderName, messageBody):
-    for user in data.users:
-        if user.name != senderName:
-            send(senderName, user.name, messageBody)
+    for name in data.get_online_now():
+        if name != senderName:
+            send(senderName, name, messageBody)

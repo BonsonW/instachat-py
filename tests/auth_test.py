@@ -9,12 +9,12 @@ from src import auth
 
 @pytest.fixture
 def existing_user_cred():
-    auth.add_cred("foo", "bar")
-    return ("foo", "bar")
+    auth.add_cred("real", "guy")
+    return ("real", "guy")
 
 @pytest.fixture
 def missing_user_cred():
-    return ("bar", "foo")
+    return ("fake", "guy")
 
 #endregion
 
