@@ -33,17 +33,17 @@ class ClientThread(Thread):
         while self.alive:
 
             data = self.clientSocket.recv(1024)
-            if self.timeout > 0:
-                sleep(1)
-                self.timeout -= 1
-                continue
+            
 
             try:
                 method, params = data.decode().split(' ', 1)
             except:
                 continue
-
-            if self.authorised:
+            if self.timeout > 0:
+                response = ' '.join([ERROR, "you are currently timed out"])
+                self.timeout -= 1
+                sleep(1)
+            elif self.authorised:
                 if method == QUIT:
                     response = self.logout(params)
                 elif method == GETM:
@@ -68,7 +68,7 @@ class ClientThread(Thread):
                 elif method == DENY:
                     response = self.deny_request(params)
                 else:
-                    response = [INVALID_METHOD, "the method you have requested is not available"]
+                    response = [ERROR, "the method you have requested is not available"]
             else:
                 if method == QUIT:
                     self.alive = False
@@ -80,7 +80,7 @@ class ClientThread(Thread):
                     user, pswd = params.split(' ', 1)
                     response = self.login(user, pswd)
                 else:
-                    response = [INVALID_METHOD, "the method you have requested is not available"]
+                    response = [ERROR, "the method you have requested is not available"]
 
             self.clientSocket.send(' '.join(response).encode())
 
@@ -94,9 +94,9 @@ class ClientThread(Thread):
     def welcome(self, user, listeningPort):
         self.listeningPort = listeningPort
         if not data.user_exists(user):
-            return [NONE_FOUND, "hello", user, "please enter a password for your new account"]
+            return [ERROR, "hello", user, "please enter a password for your new account"]
         if user == data.ALL_USERS:
-            return [INVALID_PARAMS, "invalid username entered"]
+            return [ERROR, "invalid username entered"]
         return [ACTION_COMPLETE, "welcome", user, "please enter your password"]
                
     def login(self, user, pswd):
@@ -123,40 +123,40 @@ class ClientThread(Thread):
             if self.attempts >= 3:
                 self.attempts = 0
                 self.timeout = blockDuration
-                return [INVALID_PARAMS, "incorrect password, you will be timed out", "seconds"]
-            return [INVALID_PARAMS, "incorrect password provided for", user]
+                return [ERROR, "incorrect password, you will be timed out", "seconds"]
+            return [ERROR, "incorrect password provided for", user]
     
     def get_messages(self, user):
         messages = message.get_messages(user)
         if messages:
             return [ACTION_COMPLETE, '\n'.join(messages)]
         else:
-            return [NONE_FOUND, "None"]
+            return [ERROR, "None"]
 
     def send_message(self, senderName, recipientName, messageBody):
         if not data.user_exists(recipientName):
-            return [NONE_FOUND, "invalid user"]
+            return [ERROR, "invalid user"]
         if message.send(senderName, recipientName, messageBody):
             return [ACTION_COMPLETE, "None"]
         elif recipientName == data.ALL_USERS:
             return [ACTION_COMPLETE, "not all users were able to recieve your message"]
         else:
-            return [NONE_FOUND, "you've been blocked by", recipientName]
+            return [ERROR, "you've been blocked by", recipientName]
 
     def block(self, senderName, recipientName):
         if not data.user_exists(senderName) or senderName == recipientName:
-            return [NONE_FOUND, "invalid user"]
+            return [ERROR, "invalid user"]
         sender = data.get_user(senderName)
         sender.block(recipientName)
         return [ACTION_COMPLETE, recipientName, "is now blocked"]
     
     def unblock(self, senderName, recipientName):
         if not data.user_exists(senderName) or senderName == recipientName:
-            return [NONE_FOUND, "invalid user"]
+            return [ERROR, "invalid user"]
         sender = data.get_user(senderName)
         if sender.unblock(recipientName):
             return [ACTION_COMPLETE, recipientName, "is now unblocked"]
-        return [NONE_FOUND, recipientName, "is already unblocked"]
+        return [ERROR, recipientName, "is already unblocked"]
 
     def who_else_since(self, user, timeStamp):
         onlineSince = data.get_online_since(timeStamp)
@@ -176,10 +176,10 @@ class ClientThread(Thread):
 
     def req_address(self, user):
         if not data.user_exists(user):
-            return [NONE_FOUND, "invalid user"]
+            return [ERROR, "invalid user"]
         addr = data.get_address(user)
         if addr is None:
-            return [NONE_FOUND, "user not currently online"]
+            return [ERROR, "user not currently online"]
 
         peerThread = data.get_clientThread(user)
         peerSock = peerThread.clientSocket
@@ -190,7 +190,7 @@ class ClientThread(Thread):
             peerSock.send(' '.join([CONFIRMATION, "would you like to start a private connection with", self.user, "? (y/n)", "|startprivate", self.user, "|deny", self.user]).encode())
             if self.user not in peerThread.peerRequests:
                 peerThread.peerRequests.append(self.user)
-            return [NONE_FOUND, "private connection has been requested"]
+            return [ERROR, "private connection has been requested"]
         peerSock.send(' '.join([ACTION_COMPLETE, "private connection started with", self.user]).encode())
         return [ACTION_COMPLETE, addr[0], str(addr[1])]
 
@@ -199,7 +199,7 @@ class ClientThread(Thread):
             self.peerRequests.remove(user)
             message.send("server", user, ' '.join([self.user, "has denied your request"]))
             return [ACTION_COMPLETE, "None"]
-        return [NONE_FOUND, "invalid user"]
+        return [ERROR, "invalid user"]
 #endregion
 
 #endregion

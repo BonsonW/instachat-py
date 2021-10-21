@@ -53,9 +53,9 @@ def get_online_since(timeStamp):
 
 def get_online_now(name):
     onlineNow = []
-    user = get_user(name)
     for clientThread in clientThreads:
-        if clientThread.user != name and not user.blocks(clientThread.user):
+        other = get_user(clientThread.user)
+        if clientThread.user != name and not other.blocks(name):
             onlineNow.append(clientThread.user)  
     return onlineNow
 

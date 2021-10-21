@@ -53,7 +53,7 @@ def login(sock, user, listeningPort):
     data = sock.recv(1024)
     status, response = data.decode().split(' ', 1)
     print("==== " + response)
-    status = INVALID_PARAMS
+    status = ERROR
 
     # enter password
     while status != ACTION_COMPLETE:
@@ -248,3 +248,5 @@ while True:
     commands.append(clientInput)
     if clientInput == "logout":
         break
+
+exit(0)

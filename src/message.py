@@ -16,7 +16,7 @@ def get_messages(name):
     return messages
 
 def broadcast(senderName, messageBody):
-    success = True
-    for name in data.get_online_now(senderName):
-        success = success and send(senderName, name, messageBody)
-    return success
+    onlineNow = data.get_online_now(senderName)
+    for name in onlineNow:
+        send(senderName, name, messageBody)
+    return len(onlineNow) == len(data.clientThreads) - 1
