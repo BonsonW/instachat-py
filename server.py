@@ -24,8 +24,7 @@ class ClientThread(Thread):
         self.peerRequests = []
         self.attempts = 0
         self.timeout = 0
-        
-        print("===== new connection created for: ", clientAddress)
+
         self.alive = True
         
     def run(self):
@@ -109,6 +108,7 @@ class ClientThread(Thread):
             auth.add_cred(user, pswd)
             data.add_user(user, pswd)
             data.set_online(user, self)
+            message.send(user, data.ALL_USERS, "logged on")
             self.authorised = True
             return [ACTION_COMPLETE, "welcome", user, "you are logged into your new account"]
 
@@ -117,6 +117,7 @@ class ClientThread(Thread):
         self.authorised = data.password_match(user, pswd)
         if self.authorised:
             data.set_online(user, self)
+            message.send(user, data.ALL_USERS, "logged on")
             return [ACTION_COMPLETE, "welcome", user, "you are successfully logged in"]
         else:
             self.attempts += 1

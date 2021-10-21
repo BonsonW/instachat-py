@@ -19,7 +19,6 @@ def recipientName():
 
 @pytest.fixture
 def user_real_0():
-    auth.add_cred("real", "guy")
     data.add_user("real", "guy")
     return {"name": "real", "pswd": "guy", "thread": DummyThread(('127.0.0.1', 5555), "real", 9998)}
 
