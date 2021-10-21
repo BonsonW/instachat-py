@@ -44,10 +44,11 @@ def set_offline(name, clientThread):
     clientThreads.remove(clientThread)
     get_user(name).online = False
 
-def get_online_since(timeStamp):
+def get_online_since(timeStamp, name):
     onlineSince = []
     for log in logs:
-        if log["since"] > timeStamp and log["name"] not in onlineSince:
+        other = get_user(log["name"])
+        if log["since"] > timeStamp and log["name"] not in onlineSince and not other.blocks(name) and not name == log["name"]:
             onlineSince.append(log["name"])
     return onlineSince
 

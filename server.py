@@ -159,9 +159,7 @@ class ClientThread(Thread):
         return [ERROR, recipientName, "is already unblocked"]
 
     def who_else_since(self, user, timeStamp):
-        onlineSince = data.get_online_since(timeStamp)
-        if user in onlineSince:
-            onlineSince.remove(user)
+        onlineSince = data.get_online_since(timeStamp, user)
         if onlineSince:
             return [ACTION_COMPLETE, "previously logged on:\n", '\n'.join(onlineSince)]
         else:
