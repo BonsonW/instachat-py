@@ -42,7 +42,6 @@ def set_online(name, clientThread):
 
 def set_offline(name, clientThread):
     clientThreads.remove(clientThread)
-    get_user(name).online = False
 
 def get_online_since(timeStamp, name):
     onlineSince = []
