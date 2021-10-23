@@ -11,6 +11,8 @@ from src.request_methods import *
 from src.status_codes import *
 from tests.message_test import recipientName, senderName
 
+userActivity = []
+
 #region client thread
 
 class ClientThread(Thread):
@@ -33,18 +35,20 @@ class ClientThread(Thread):
 
             data = self.clientSocket.recv(1024)
             
+            reset_user_activity(self.user)
 
             try:
                 method, params = data.decode().split(' ', 1)
             except:
                 continue
+
             if self.timeout > 0:
                 response = ' '.join([ERROR, "you are currently timed out"])
                 self.timeout -= 1
                 sleep(1)
             elif self.authorised:
                 if method == QUIT:
-                    response = self.logout(params)
+                    response = self.logout(self.user)
                 elif method == GETM:
                     response = self.get_messages(params)
                 elif method == MSSG:
@@ -87,6 +91,7 @@ class ClientThread(Thread):
 
     def logout(self, user):
         self.alive = False
+        message.send(user, data.ALL_USERS, "logged off")
         data.set_offline(user, self)
         return [CONNECTION_END, "ending connection, goodbye"]
 
@@ -203,7 +208,23 @@ class ClientThread(Thread):
 
 #endregion
 
+def disconnect_idle_clients():
+    while True:
+        for u in userActivity:
+            u["idleTime"] += 1
+            if u["idleTime"] > 30:
+                clientThread = data.get_clientThread()
+                clientThread.logout(clientThread.user)
+
+def reset_user_activity(user):
+    for u in userActivity:
+        if u["user"] == user:
+            u["idleTime"] = 0
+
 #region welcome process
+
+disconnectIdle = Thread(target=disconnect_idle_clients)
+disconnectIdle.start()
 
 # acquire server host and port from command line parameter
 # if len(sys.argv) != 2:
@@ -226,3 +247,4 @@ while True:
     clientThread.start()
     
 #endregion
+
