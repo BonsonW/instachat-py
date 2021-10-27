@@ -38,6 +38,7 @@ class PeerThread(Thread):
                 self.user = params
             elif method == QUIT:
                 self.alive = False
+                print("===== connection ended with: " + self.user)
             elif method == MSSG:
                 print(self.user + ": " + params)
 
@@ -66,6 +67,8 @@ def login(sock, user, listeningPort):
 
 def end_connection(sock, user):
     sock.sendall(' '.join([QUIT, user]).encode())
+    for thread in peerThreads:
+        thread.socket.sendall(' '.join([QUIT, user]).encode())
 
 def get_messages(sock, user):
     sock.sendall(' '.join([GETM, user]).encode())
@@ -99,17 +102,31 @@ def start_private(sock, senderName, recipientName):
     else:
         print("==== " + response)
 
+def end_private(recipientName):
+    thread = get_peer_thread(recipientName)
+    if thread is not None:
+        thread.socket.sendall(' '.join([QUIT, "None"]).encode())
+        print("==== connection ended with " + recipientName)
+    else:
+        print("==== invalid user")
+        
 def send_private(recipientName, message):
     sock = get_peer_socket(recipientName)
     if sock is not None:
         sock.sendall(' '.join([MSSG, message]).encode())
     else:
-        print("==== no such user")
+        print("==== invalid user")
 
 def get_peer_socket(user):
     for peerThread in peerThreads:
         if peerThread.user == user:
             return peerThread.socket
+    return None
+
+def get_peer_thread(user):
+    for peerThread in peerThreads:
+        if peerThread.user == user:
+            return peerThread
     return None
 
 def deny_request(sock, user):
@@ -167,8 +184,10 @@ def update_loop():
                 # end connection with all peers
             elif command == "y":
                 commands.pop(1)
+                print("==== you have accepted")
             elif command == "n":
                 commands.pop(0)
+                print("==== you have denied")
             elif command == "whoelse":
                 who_else(clientSocket, name, "None")
             else:
@@ -188,6 +207,9 @@ def update_loop():
                     elif command == "private":
                         recipientName, messageBody = params.split(' ', 1)
                         send_private(recipientName, messageBody)
+                        continue
+                    elif command == "endprivate":
+                        end_private(params)
                         continue
                     elif command == "deny":
                         deny_request(clientSocket, params)
@@ -243,7 +265,7 @@ welcomeThread = Thread(target=listen)
 welcomeThread.start()
 
 while True:
-    clientInput = input()
+    clientInput = input("> ")
     waiting = False
     commands.append(clientInput)
     if clientInput == "logout":
