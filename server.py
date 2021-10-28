@@ -32,23 +32,26 @@ class ClientThread(Thread):
     def run(self):
         response = []
         while self.alive:
+            
+            if self.timeout > 0:
+                self.timeout -= 1
+                sleep(1)
+                continue
 
             data = self.clientSocket.recv(1024)
-            
-            reset_user_activity(self.user)
 
             try:
                 method, params = data.decode().split(' ', 1)
             except:
                 continue
+            
+            if method != GETM:
+                reset_user_activity(self.user)
 
-            if self.timeout > 0:
-                response = [ERROR, "you are currently timed out"]
-                self.timeout -= 1
-                sleep(1)
-            elif self.authorised:
+
+            if self.authorised:
                 if method == QUIT:
-                    response = self.logout(self.user)
+                    response = self.logout()
                 elif method == GETM:
                     response = self.get_messages(params)
                 elif method == MSSG:
@@ -89,10 +92,10 @@ class ClientThread(Thread):
 
 #region request method processes
 
-    def logout(self, user):
+    def logout(self):
         self.alive = False
-        message.send(user, data.ALL_USERS, "logged off")
-        data.set_offline(user, self)
+        message.send(self.user, data.ALL_USERS, "logged off")
+        data.set_offline(self.user, self)
         return [CONNECTION_END, "ending connection, goodbye"]
 
     def welcome(self, user, listeningPort):
@@ -105,8 +108,6 @@ class ClientThread(Thread):
                
     def login(self, user, pswd):
         self.user = user
-        if self.authorised:
-            return [ACTION_COMPLETE, "you are already logged into account", user]
             
         # create new acc
         if not data.user_exists(user):
@@ -115,6 +116,7 @@ class ClientThread(Thread):
             data.set_online(user, self)
             message.send(user, data.ALL_USERS, "logged on")
             self.authorised = True
+            userActivity.append({"user": user, "idleTime": 0})
             return [ACTION_COMPLETE, "welcome", user, "you are logged into your new account"]
 
         # or check password
@@ -123,6 +125,7 @@ class ClientThread(Thread):
         if self.authorised:
             data.set_online(user, self)
             message.send(user, data.ALL_USERS, "logged on")
+            userActivity.append({"user": user, "idleTime": 0})
             return [ACTION_COMPLETE, "welcome", user, "you are successfully logged in"]
         else:
             self.attempts += 1
@@ -176,7 +179,7 @@ class ClientThread(Thread):
         if onlineNow:
             return [ACTION_COMPLETE, " online now:\n", '\n'.join(onlineNow)]
         else:
-            return [ACTION_COMPLETE, "no other useres are online right now"]
+            return [ACTION_COMPLETE, "no other users are online right now"]
 
     def req_address(self, user):
         if not data.user_exists(user):
@@ -210,13 +213,17 @@ class ClientThread(Thread):
 
 def disconnect_idle_clients():
     while True:
-        for u in userActivity:
-            u["idleTime"] += 1
-            if u["idleTime"] > 30:
-                clientThread = data.get_clientThread()
-                clientThread.logout(clientThread.user)
+        sleep(1)
+        for i, u in enumerate(reversed(userActivity)):
+            userActivity[i]["idleTime"] += 1
+            if u["idleTime"] > 5:
+                clientThread = data.get_clientThread(u["user"])
+                clientThread.clientSocket.send(' '.join([ERROR, "you have been kicked for inactivity"]).encode())
+                clientThread.logout()
+                del(userActivity[i])
 
 def reset_user_activity(user):
+    pass
     for u in userActivity:
         if u["user"] == user:
             u["idleTime"] = 0
