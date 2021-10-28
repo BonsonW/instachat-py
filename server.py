@@ -43,7 +43,7 @@ class ClientThread(Thread):
                 continue
 
             if self.timeout > 0:
-                response = ' '.join([ERROR, "you are currently timed out"])
+                response = [ERROR, "you are currently timed out"]
                 self.timeout -= 1
                 sleep(1)
             elif self.authorised:

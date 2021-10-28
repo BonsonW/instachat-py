@@ -265,7 +265,7 @@ welcomeThread = Thread(target=listen)
 welcomeThread.start()
 
 while True:
-    clientInput = input("> ")
+    clientInput = input()
     waiting = False
     commands.append(clientInput)
     if clientInput == "logout":
