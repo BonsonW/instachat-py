@@ -1,4 +1,3 @@
-SERVER_READY        = "220"
 CONNECTION_END      = "221"
 ACTION_COMPLETE     = "250"
 ERROR               = "500"

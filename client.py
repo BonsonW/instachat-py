@@ -3,6 +3,7 @@ from threading import Thread
 from time import sleep
 from socket import *
 import time
+import os
 import sys
 
 # internal
@@ -46,7 +47,7 @@ class PeerThread(Thread):
 
 #endregion
 
-#region client methods
+#region client processes
 
 def login(sock, user, listeningPort):
     # check username
@@ -67,8 +68,6 @@ def login(sock, user, listeningPort):
 
 def end_connection(sock, user):
     sock.sendall(' '.join([QUIT, user]).encode())
-    for thread in peerThreads:
-        thread.socket.sendall(' '.join([QUIT, user]).encode())
 
 def get_messages(sock, user):
     sock.sendall(' '.join([GETM, user]).encode())
@@ -144,18 +143,17 @@ def unblock(sock, senderName, recipientName):
 #region establish connection
 
 # Server would be running on the same host as Client
-# if len(sys.argv) != 3:
-#     print("\n===== Error usage, python3 TCPClient3.py SERVER_IP SERVER_PORT ======\n");
-#     exit(0);
-serverHost = "127.0.0.1"
-serverPort = 8080
-serverAddress = (serverHost, serverPort)
+if len(sys.argv) != 2:
+    print("\n===== error usage, python3 client.py SERVER_PORT\n")
+    exit(0)
 
-welcomeSocket = socket(AF_INET, SOCK_STREAM)
-welcomeSocket.bind(('127.0.0.1', 0))
+serverPort = int(sys.argv[1])
 
 # define a socket for the client side, it would be used to communicate with the server
-clientSocket = new_connection(serverAddress)
+clientSocket = new_connection(("127.0.0.1", serverPort))
+
+welcomeSocket = socket(AF_INET, SOCK_STREAM)
+welcomeSocket.bind(("127.0.0.1", 0))
 
 login(clientSocket, name, welcomeSocket.getsockname()[1])
 
@@ -168,6 +166,7 @@ waiting = False
 
 def update_loop():
     global waiting
+
     while True:
 
         sleep(1)
@@ -181,7 +180,8 @@ def update_loop():
             # execute methods
             if command == "logout":
                 end_connection(clientSocket, name)
-                # end connection with all peers
+                for thread in peerThreads:
+                    thread.socket.sendall(' '.join([QUIT, name]).encode())
             elif command == "y":
                 commands.pop(1)
                 print("==== you have accepted")
@@ -233,18 +233,18 @@ def update_loop():
         except:
             continue
 
-        # print response given by server
+        # handle response given by server
         if status == CONFIRMATION:
             body, accept, deny = body.split(" |", 2)
             commands.append(accept)
             commands.append(deny)
             waiting = True
+
         if body != "None":
             print("==== " + body)
         
         if (status == CONNECTION_END):
-            clientSocket.close()
-            break
+            os._exit(0)
 
 
 def listen():
@@ -268,7 +268,3 @@ while True:
     clientInput = input()
     waiting = False
     commands.append(clientInput)
-    if clientInput == "logout":
-        break
-
-exit(0)

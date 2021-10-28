@@ -25,7 +25,7 @@ class ClientThread(Thread):
         self.user = None
         self.peerRequests = []
         self.attempts = 0
-        self.timeout = 0
+        self.blockTime = 0
 
         self.alive = True
         
@@ -33,8 +33,8 @@ class ClientThread(Thread):
         response = []
         while self.alive:
             
-            if self.timeout > 0:
-                self.timeout -= 1
+            if self.blockTime > 0:
+                self.blockTime -= 1
                 sleep(1)
                 continue
 
@@ -90,7 +90,7 @@ class ClientThread(Thread):
 
             self.clientSocket.send(' '.join(response).encode())
 
-#region request method processes
+#region client thread processes
 
     def logout(self):
         self.alive = False
@@ -131,7 +131,7 @@ class ClientThread(Thread):
             self.attempts += 1
             if self.attempts >= 3:
                 self.attempts = 0
-                self.timeout = blockDuration
+                self.blockTime = blockDuration
                 return [ERROR, "incorrect password, you will be timed out", "seconds"]
             return [ERROR, "incorrect password provided for", user]
     
@@ -207,18 +207,21 @@ class ClientThread(Thread):
             message.send("server", user, ' '.join([self.user, "has denied your request"]))
             return [ACTION_COMPLETE, "None"]
         return [ERROR, "invalid user"]
+
 #endregion
 
 #endregion
+
+#region server processes
 
 def disconnect_idle_clients():
     while True:
         sleep(1)
         for i, u in enumerate(reversed(userActivity)):
             userActivity[i]["idleTime"] += 1
-            if u["idleTime"] > 5:
+            if u["idleTime"] > timeoutSeconds:
                 clientThread = data.get_clientThread(u["user"])
-                clientThread.clientSocket.send(' '.join([ERROR, "you have been kicked for inactivity"]).encode())
+                clientThread.clientSocket.send(' '.join([CONNECTION_END, "you have been kicked for inactivity"]).encode())
                 clientThread.logout()
                 del(userActivity[i])
 
@@ -228,25 +231,28 @@ def reset_user_activity(user):
         if u["user"] == user:
             u["idleTime"] = 0
 
-#region welcome process
+#endregion
 
-disconnectIdle = Thread(target=disconnect_idle_clients)
-disconnectIdle.start()
+#region server initialization
 
 # acquire server host and port from command line parameter
-# if len(sys.argv) != 2:
-#     print("\n===== Error usage, python3 TCPServer3.py SERVER_PORT ======\n");
-#     exit(0);
-serverHost = "127.0.0.1"
-serverPort =  8080 # int(sys.argv[1])
-serverAddress = (serverHost, serverPort)
+if len(sys.argv) != 4:
+    print("\n===== error usage, python3 server.py SERVER_PORT BLOCK_DURATION TIMEOUT\n")
+    exit(0)
 
-blockDuration = 10
+serverPort = int(sys.argv[1])
+blockDuration = int(sys.argv[2])
+timeoutSeconds = int(sys.argv[3])
 
 # define socket for the server side and bind address
 serverSocket = socket(AF_INET, SOCK_STREAM)
-serverSocket.bind(serverAddress)
+serverSocket.bind(("127.0.0.1", serverPort))
 
+# start thread for timing out inactive users
+disconnectIdle = Thread(target=disconnect_idle_clients)
+disconnectIdle.start()
+
+# start welcome process
 while True:
     serverSocket.listen()
     clientSocket, clientAddress = serverSocket.accept()
