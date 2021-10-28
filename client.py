@@ -208,7 +208,7 @@ def update_loop():
                         recipientName, messageBody = params.split(' ', 1)
                         send_private(recipientName, messageBody)
                         continue
-                    elif command == "endprivate":
+                    elif command == "stopprivate":
                         end_private(params)
                         continue
                     elif command == "deny":
