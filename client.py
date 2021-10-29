@@ -182,6 +182,8 @@ def update_loop():
                 end_connection(clientSocket, name)
                 for thread in peerThreads:
                     thread.socket.sendall(' '.join([QUIT, name]).encode())
+            elif command == "getmessages":
+                get_messages(clientSocket, name)
             elif command == "y":
                 commands.pop(1)
                 print("==== you have accepted")
