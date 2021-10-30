@@ -11,8 +11,6 @@ from src.request_methods import *
 from src.status_codes import *
 from src.data import ALL_USERS
 
-name = input("name: ")
-
 peerThreads = []
 
 #region p2p
@@ -154,6 +152,8 @@ clientSocket = new_connection(("127.0.0.1", serverPort))
 
 welcomeSocket = socket(AF_INET, SOCK_STREAM)
 welcomeSocket.bind(("127.0.0.1", 0))
+
+name = input("name: ")
 
 login(clientSocket, name, welcomeSocket.getsockname()[1])
 

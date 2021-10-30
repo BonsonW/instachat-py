@@ -12,6 +12,7 @@ from src.status_codes import *
 from tests.message_test import recipientName, senderName
 
 userActivity = []
+usersBlocked = []
 
 #region client thread
 
@@ -25,18 +26,12 @@ class ClientThread(Thread):
         self.user = None
         self.peerRequests = []
         self.attempts = 0
-        self.blockTime = 0
 
         self.alive = True
         
     def run(self):
         response = []
         while self.alive:
-            
-            if self.blockTime > 0:
-                self.blockTime -= 1
-                sleep(1)
-                continue
 
             data = self.clientSocket.recv(1024)
 
@@ -47,7 +42,6 @@ class ClientThread(Thread):
             
             if method != GETM:
                 reset_user_activity(self.user)
-
 
             if self.authorised:
                 if method == QUIT:
@@ -101,14 +95,17 @@ class ClientThread(Thread):
     def welcome(self, user, listeningPort):
         self.listeningPort = listeningPort
         if not data.user_exists(user):
-            return [ERROR, "hello", user, "please enter a password for your new account"]
+            return [ACTION_COMPLETE, "hello", user, "please enter a password for your new account"]
         if user == data.ALL_USERS:
             return [ERROR, "invalid username entered"]
         return [ACTION_COMPLETE, "welcome", user, "please enter your password"]
                
     def login(self, user, pswd):
         self.user = user
-            
+        
+        if is_blocked(user):
+            return [ERROR, "timed out for too many password attempts, try again later"]
+        
         # create new acc
         if not data.user_exists(user):
             auth.add_cred(user, pswd)
@@ -131,8 +128,8 @@ class ClientThread(Thread):
             self.attempts += 1
             if self.attempts >= 3:
                 self.attempts = 0
-                self.blockTime = blockDuration
-                return [ERROR, "incorrect password, you will be timed out", "seconds"]
+                usersBlocked.append({"user": user, "blockTime": blockDuration})
+                return [ERROR, "timed out for too many password attempts, try again later"]
             return [ERROR, "incorrect password provided for", user]
     
     def get_messages(self, user):
@@ -214,6 +211,20 @@ class ClientThread(Thread):
 
 #region server processes
 
+def is_blocked(user):
+    for u in usersBlocked:
+        if u["user"] == user:
+            return True
+    return False
+
+def unblock_users():
+    while True:
+        sleep(1)
+        for i, u in enumerate(reversed(usersBlocked)):
+            usersBlocked[i]["blockTime"] -= 1
+            if u["blockTime"] < 0:
+                del(usersBlocked[i])
+
 def disconnect_idle_clients():
     while True:
         sleep(1)
@@ -226,7 +237,6 @@ def disconnect_idle_clients():
                 del(userActivity[i])
 
 def reset_user_activity(user):
-    pass
     for u in userActivity:
         if u["user"] == user:
             u["idleTime"] = 0
@@ -250,6 +260,10 @@ serverSocket.bind(("127.0.0.1", serverPort))
 
 # start thread for timing out inactive users
 disconnectIdle = Thread(target=disconnect_idle_clients)
+disconnectIdle.start()
+
+# start thread for unblocking blocked users
+disconnectIdle = Thread(target=unblock_users)
 disconnectIdle.start()
 
 # start welcome process
