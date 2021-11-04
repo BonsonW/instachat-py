@@ -82,7 +82,7 @@ class ClientThread(Thread):
                 else:
                     response = [ERROR, "the method you have requested is not available"]
 
-            self.clientSocket.send(' '.join(response).encode())
+            self.clientSocket.sendall(' '.join(response).encode())
 
 #region client thread processes
 
@@ -114,7 +114,7 @@ class ClientThread(Thread):
             message.send(user, data.ALL_USERS, "logged on")
             self.authorised = True
             userActivity.append({"user": user, "idleTime": 0})
-            return [ACTION_COMPLETE, "welcome", user, "you are logged into your new account"]
+            return [ACTION_COMPLETE, str(timeoutSeconds), "welcome", user, "you are logged into your new account"]
 
         # or check password
         # timeout after 3 failed attempts
@@ -123,7 +123,7 @@ class ClientThread(Thread):
             data.set_online(user, self)
             message.send(user, data.ALL_USERS, "logged on")
             userActivity.append({"user": user, "idleTime": 0})
-            return [ACTION_COMPLETE, "welcome", user, "you are successfully logged in"]
+            return [ACTION_COMPLETE, str(timeoutSeconds), "welcome", user, "you are successfully logged in"]
         else:
             self.attempts += 1
             if self.attempts >= 3:
@@ -230,19 +230,21 @@ def unblock_users():
 def disconnect_idle_clients():
     while True:
         sleep(1)
-        for i, u in enumerate(reversed(userActivity)):
+        for i in range(len(userActivity)-1, -1, -1):
+            u = userActivity[i]
             userActivity[i]["idleTime"] += 1
             if u["idleTime"] > timeoutSeconds:
                 clientThread = data.get_clientThread(u["user"])
-                clientThread.clientSocket.send(' '.join([CONNECTION_END, "you have been kicked for inactivity"]).encode())
-                clientThread.logout()
-                del(userActivity[i])
+                if clientThread is not None:
+                    clientThread.clientSocket.sendall(' '.join([CONNECTION_END, "you have been kicked for inactivity"]).encode())
+                    clientThread.logout()
+                userActivity.pop(i)
+
 
 def reset_user_activity(user):
     for u in userActivity:
         if u["user"] == user:
             u["idleTime"] = 0
-
 #endregion
 
 #region server initialization

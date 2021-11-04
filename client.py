@@ -12,6 +12,7 @@ from src.status_codes import *
 from src.data import ALL_USERS
 
 peerThreads = []
+peerActivity = []
 commands = []
 waiting = False
 timeoutSeconds = 0
@@ -38,11 +39,13 @@ class PeerThread(Thread):
             
             if method == HELO:
                 self.user = params
+                peerActivity.append({"peer": self.user, "idleTime": 0})
             elif method == QUIT:
                 self.alive = False
-                self.socket.sendall(' '.join([QUIT, self.user]).encode())
-                print("===== connection ended with " + self.user)
+                self.socket.sendall(' '.join([QUIT, "None"]).encode())
+                print("===== connection has ended with " + self.user)
             elif method == MSSG:
+                reset_peer_activity(self.user)
                 print(self.user + ": " + params)
 
         peerThreads.remove(self)
@@ -52,6 +55,8 @@ class PeerThread(Thread):
 #region client processes
 
 def login(sock, user, listeningPort):
+    global timeoutSeconds
+    
     # check username
     sock.sendall(' '.join([HELO, user, str(listeningPort)]).encode())
     data = sock.recv(1024)
@@ -65,15 +70,12 @@ def login(sock, user, listeningPort):
         sock.sendall(' '.join([LOGN, user, pswd]).encode())
 
         data = sock.recv(1024)
-        status, timeoutSeconds, response = data.decode().split(' ', 2)
+        status, timeoutSecondsStr, response = data.decode().split(' ', 2)
+        timeoutSeconds = int(timeoutSecondsStr)
         print("==== " + response)
 
 def disconnect(sock, user):
     sock.sendall(' '.join([QUIT, user]).encode())
-
-def disconnect_peers(user):
-    for thread in peerThreads:
-        thread.socket.sendall(' '.join([QUIT, user]).encode())
 
 def get_messages(sock, user):
     sock.sendall(' '.join([GETM, user]).encode())
@@ -108,9 +110,9 @@ def start_private(sock, senderName, recipientName):
         print("==== " + response)
 
 def end_private(recipientName):
-    thread = get_peer_thread(recipientName)
-    if thread is not None:
-        thread.socket.sendall(' '.join([QUIT, "None"]).encode())
+    peerThread = get_peer_thread(recipientName)
+    if peerThread is not None:
+        peerThread.socket.sendall(' '.join([QUIT, "None"]).encode())
     else:
         print("==== invalid user")
         
@@ -166,8 +168,6 @@ login(clientSocket, name, welcomeSocket.getsockname()[1])
 
 #endregion
 
-#region update loop
-
 def update_loop():
     global waiting
 
@@ -184,7 +184,8 @@ def update_loop():
             # execute methods
             if command == "logout":
                 disconnect(clientSocket, name)
-                disconnect_peers(name)
+                for peerThread in peerThreads:
+                    disconnect(peerThread.socket, name)
             elif command == "getmessages":
                 get_messages(clientSocket, name)
             elif command == "y":
@@ -251,7 +252,6 @@ def update_loop():
         if (status == CONNECTION_END):
             os._exit(0)
 
-
 def listen():
     # listen for new peer connection
     while True:
@@ -261,10 +261,30 @@ def listen():
         peerThreads.append(peerThread)
         peerThread.start()
 
-#end region
+def disconnect_idle_peers():
+    global timeoutSeconds
+    while True:
+        sleep(1)
+        for i in range(len(peerActivity)-1, -1, -1):
+            p = peerActivity[i]
+            peerActivity[i]["idleTime"] += 1
+            if p["idleTime"] > timeoutSeconds:
+                peerThread = get_peer_thread(p["peer"])
+                if peerThread is not None:
+                    disconnect(peerThread.socket, name)
+                    print("===== connection ending with " + peerThread.user + " due to inactivity")
+                peerActivity.pop(i)
+
+def reset_peer_activity(peer):
+    for u in peerActivity:
+        if u["peer"] == peer:
+            u["idleTime"] = 0
 
 updateThread = Thread(target=update_loop)
 updateThread.start()
+
+timeoutThread = Thread(target=disconnect_idle_peers)
+timeoutThread.start()
 
 welcomeThread = Thread(target=listen)
 welcomeThread.start()
