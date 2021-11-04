@@ -58,7 +58,7 @@ class ClientThread(Thread):
                     user, other = params.split(' ', 1)
                     response = self.unblock(user, other)
                 elif method == ADDR:
-                    response = self.req_address(params)
+                    response = self.req_address(self.user, params)
                 elif method == ELSE:
                     user, timeStamp = params.split(' ', 1)
                     if (timeStamp == "None"):
@@ -178,24 +178,26 @@ class ClientThread(Thread):
         else:
             return [ACTION_COMPLETE, "no other users are online right now"]
 
-    def req_address(self, user):
-        if not data.user_exists(user):
+    def req_address(self, senderName, recipientName):
+        if not data.user_exists(recipientName):
             return [ERROR, "invalid user"]
-        addr = data.get_address(user)
+        if data.get_user(recipientName).blocks(senderName):
+            return [ERROR, "invalid user"]
+        addr = data.get_address(recipientName)
         if addr is None:
             return [ERROR, "user not currently online"]
 
-        peerThread = data.get_clientThread(user)
+        peerThread = data.get_clientThread(recipientName)
         peerSock = peerThread.clientSocket
         
         # if not queued up as peer, send request to recipient
         # otherwise start connection
-        if user not in self.peerRequests:
-            peerSock.send(' '.join([CONFIRMATION, "would you like to start a private connection with", self.user, "? (y/n)", "|startprivate", self.user, "|deny", self.user]).encode())
-            if self.user not in peerThread.peerRequests:
-                peerThread.peerRequests.append(self.user)
+        if recipientName not in self.peerRequests:
+            peerSock.send(' '.join([CONFIRMATION, "would you like to start a private connection with", senderName, "? (y/n)", "|startprivate", senderName, "|deny", senderName]).encode())
+            if senderName not in peerThread.peerRequests:
+                peerThread.peerRequests.append(senderName)
             return [ERROR, "private connection has been requested"]
-        peerSock.send(' '.join([ACTION_COMPLETE, "private connection started with", self.user]).encode())
+        peerSock.send(' '.join([ACTION_COMPLETE, "private connection started with", senderName]).encode())
         return [ACTION_COMPLETE, addr[0], str(addr[1])]
 
     def deny_request(self, user):

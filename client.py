@@ -12,6 +12,9 @@ from src.status_codes import *
 from src.data import ALL_USERS
 
 peerThreads = []
+commands = []
+waiting = False
+timeoutSeconds = 0
 
 #region p2p
 
@@ -37,7 +40,8 @@ class PeerThread(Thread):
                 self.user = params
             elif method == QUIT:
                 self.alive = False
-                print("===== connection ended with: " + self.user)
+                self.socket.sendall(' '.join([QUIT, self.user]).encode())
+                print("===== connection ended with " + self.user)
             elif method == MSSG:
                 print(self.user + ": " + params)
 
@@ -61,11 +65,15 @@ def login(sock, user, listeningPort):
         sock.sendall(' '.join([LOGN, user, pswd]).encode())
 
         data = sock.recv(1024)
-        status, response = data.decode().split(' ', 1)
+        status, timeoutSeconds, response = data.decode().split(' ', 2)
         print("==== " + response)
 
-def end_connection(sock, user):
+def disconnect(sock, user):
     sock.sendall(' '.join([QUIT, user]).encode())
+
+def disconnect_peers(user):
+    for thread in peerThreads:
+        thread.socket.sendall(' '.join([QUIT, user]).encode())
 
 def get_messages(sock, user):
     sock.sendall(' '.join([GETM, user]).encode())
@@ -103,7 +111,6 @@ def end_private(recipientName):
     thread = get_peer_thread(recipientName)
     if thread is not None:
         thread.socket.sendall(' '.join([QUIT, "None"]).encode())
-        print("==== connection ended with " + recipientName)
     else:
         print("==== invalid user")
         
@@ -161,9 +168,6 @@ login(clientSocket, name, welcomeSocket.getsockname()[1])
 
 #region update loop
 
-commands = []
-waiting = False
-
 def update_loop():
     global waiting
 
@@ -179,9 +183,8 @@ def update_loop():
             
             # execute methods
             if command == "logout":
-                end_connection(clientSocket, name)
-                for thread in peerThreads:
-                    thread.socket.sendall(' '.join([QUIT, name]).encode())
+                disconnect(clientSocket, name)
+                disconnect_peers(name)
             elif command == "getmessages":
                 get_messages(clientSocket, name)
             elif command == "y":
