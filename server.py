@@ -9,7 +9,6 @@ from time import sleep, strptime, time
 from src import auth, data, message
 from src.request_methods import *
 from src.status_codes import *
-from tests.message_test import recipientName, senderName
 
 userActivity = []
 usersBlocked = []

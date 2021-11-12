@@ -14,6 +14,8 @@
 \begin{document}
 
 \maketitle
+
+
 \section{Client-Server Communication}
 
 \begin{flushleft}
@@ -29,9 +31,12 @@
 	If the queue is empty, our thread simply sends out an update request to the server.
 	This structure ensures that only one request is sent at a time, and that the client is sent updates regularly.
 	Furthermore, when waiting for replies from recipients (i.e when requesting a private channel) our user can continue their activity until the recipeint responds.
+\end{flushleft}
+
+\begin{flushleft}
 	One downfall with the current design is that if the client sends commands constantly, they will not recieve any updates as the command queue is constantly full.
 	To negate this, we can simply add an update request after every command our user inputs.
-	Since our client is dictating the information flow of our application, the server side loop is much simpler. With virtually no deviation from the start code, our server simply waits for client requests, and responds according to the spec.
+	Since our client is dictating the information flow of our application, the server side loop is much simpler. With virtually no deviation from the start code, our server loop simply waits for client requests, and responds according to the spec.
 \end{flushleft}
 
 \begin{flushleft}
@@ -42,7 +47,7 @@
 	The server can then process the client response as a normal request sent by the client.
 \end{flushleft}
 
-\maketitle
+
 \section{Status codes and Request Methods}
 
 \begin{flushleft}
@@ -57,8 +62,6 @@
 	Although this simplifies our client side program, this requires more data to be sent by the server than is typically necessary.
 \end{flushleft}
 
-
-\maketitle
 \section{Server Backend}
 
 \begin{flushleft}
@@ -84,7 +87,7 @@
 
 \newpage
 
-\maketitle
+
 \section{Peer to Peer Connections}
 
 \begin{flushleft}
@@ -93,6 +96,22 @@
 	After accepting a private connection request, the server will respond with the senders welcoming port and address so our client can setup a new peer connection. 
 	Similar to our server, we will create a separate thread for handling the socket for another peer. Named PeerThread, this process is responsible for recieving and displaying messages sent by the other peer.
 	On top of this, it will terminate itself when the peer logs out.
+\end{flushleft}
+
+
+\section{Circumstances Where The Program Does Not Work}
+
+\begin{enumerate}
+	\item Abruptly ending the client process.
+	\item Responding to (y/n) with anything other than ``y'' or ``n''.
+	\item Putting spaces in the username and password.
+	\item Logging in the same account in two different terminals.
+\end{enumerate}
+
+\section{Additional Information}
+
+\begin{flushleft}
+	Language: Python 3.9.4
 \end{flushleft}
 
 \end{document}
