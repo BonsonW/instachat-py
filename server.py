@@ -1,9 +1,8 @@
 # external
-from os import times
 from socket import *
 from threading import Thread
-import sys, select
-from time import sleep, strptime, time
+import sys
+from time import sleep
 
 # internal
 from src import auth, data, message
